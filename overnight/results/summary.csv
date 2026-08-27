@@ -1,0 +1,5 @@
+track,steps,samples,n,inference_s_mean,inference_s_median,inference_s_sd,total_s_mean,speedup_vs_baseline,gpu_s_saved_per_prediction,global_dockq_mean,global_dockq_median,d_global_dockq_vs_baseline,d_dockq_ci_lo,d_dockq_ci_hi,d_dockq_p_paired,ca_rmsd_mean,interface_rmsd_mean,tm_score_mean,dockq_acceptable_frac,dockq_high_frac
+t1_baseline,200,5,30,10.04,10.06,0.027,13.38,1.0,0.0,0.7212,0.753,0.0,0.0,0.0,,3.173,2.507,0.9052,1.0,0.367
+t2_fewsteps,160,5,30,8.79,8.8,0.034,12.09,1.143,1.26,0.7143,0.7241,-0.0068,-0.0255,0.0065,0.4264,3.25,2.566,0.9022,1.0,0.333
+t3_onesample,200,1,30,6.02,6.03,0.012,9.36,1.668,4.02,0.7143,0.7252,-0.0068,-0.0211,0.0062,0.3414,3.235,2.536,0.9021,1.0,0.333
+t4_both,160,1,30,5.57,5.57,0.012,8.89,1.804,4.48,0.7109,0.7164,-0.0103,-0.032,0.0074,0.3262,3.259,2.581,0.9024,1.0,0.333

@@ -1,0 +1,18 @@
+{
+  "n_structures": 30,
+  "n_samples": 5,
+  "total_steps": 200,
+  "criteria": {
+    "mean_to_final<2.0A": 150,
+    "mean_to_final<1.0A": 158,
+    "mean_to_final<0.5A": 164,
+    "mean_to_final<0.25A": 168,
+    "all_structures_to_final<1.0A": 159,
+    "to_native_within_0.1A_of_plateau": 163
+  },
+  "primary_criterion": "mean_to_final<1.0A",
+  "converged_step": 158,
+  "rounded_step": 160,
+  "mean_to_final_at_converged": 0.9753136182039918,
+  "mean_to_native_final": 3.3662852181791356
+}
