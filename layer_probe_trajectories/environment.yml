@@ -1,0 +1,39 @@
+# Two environments are used; both already exist on this host and are recorded
+# here so the run can be rebuilt elsewhere.
+#
+#   layer_probe_esmfold2  -> ESMFold2 inference, probes, reconstruction, XTC,
+#                            metrics, figures  (conda env `local_esmfold2`)
+#   layer_probe_af3       -> AlphaFold 3 inference only (conda env `af3`);
+#                            it writes .npy/.npz that the other env consumes.
+#
+# DockQ is a third, isolated env (conda env `dockq`, DockQ v2) invoked as a
+# subprocess by scripts/metrics.py.
+name: layer_probe_esmfold2
+channels: [conda-forge]
+dependencies:
+  - python=3.12
+  - pip
+  - pip:
+      - torch==2.12.0
+      - transformers==4.57.6
+      - esm==3.3.0
+      - numpy==2.4.6
+      - pandas==3.0.3
+      - scipy==1.17.1
+      - scikit-learn==1.8.0
+      - biopython==1.87
+      - MDAnalysis==2.10.0
+      - matplotlib==3.10.9
+      - pytest
+---
+# name: layer_probe_af3
+# dependencies:
+#   - python=3.12
+#   - pip:
+#       - alphafold3==3.0.1     # built from google-deepmind/alphafold3 @ 87bd9e6
+#       - jax==0.9.1
+#       - jax-cuda12-plugin==0.9.1
+#       - dm-haiku==0.0.16
+#       - numpy==2.4.4
+# NOTE: run the AF3 env with LD_LIBRARY_PATH unset, otherwise a system CUDA
+# install shadows the pip nvidia wheels and JAX falls back to CPU silently.
