@@ -27,7 +27,7 @@ a.set_xscale("log")
 a.axhline(0.49, ls="--", lw=1, c="#b5545c")
 a.set_xlabel("AF3 vs ESMFold2 C$\\alpha$ RMSD (\\AA)" if False else "AF3 vs ESMFold2 Cα RMSD (Å)")
 a.set_ylabel("min(AF3, ESMFold2) Global DockQ")
-a.set_title("A  Cross-model divergence tracks accuracy")
+a.set_title("A  Cross-model divergence vs accuracy")
 a.text(.04, .07, f"Spearman ρ = {rho[0]:.3f}\np = {rho[1]:.1e}", transform=a.transAxes,
        va="bottom", ha="left", fontsize=9)
 a.text(.97, .52, "medium", transform=a.transAxes, ha="right", fontsize=8, color="#b5545c")
@@ -46,7 +46,7 @@ for i, (m, col) in enumerate([("af3_dockq", BASE_COLORS["AF3"]), ("esm_dockq", B
 b.set_xticks(range(4)); b.set_xticklabels(D.q.cat.categories)
 b.set_ylabel("Global DockQ"); b.set_ylim(0, 1)
 b.axhline(0.49, ls="--", lw=1, c="#b5545c")
-b.set_title("B  Both models fail on the same complexes")
+b.set_title("B  Accuracy by divergence quartile")
 b.legend(handles=[plt.Line2D([], [], color=BASE_COLORS[k], lw=6, alpha=.55, label=k)
                   for k in ("AF3", "ESMFold2")], loc="lower left", frameon=False)
 
@@ -61,7 +61,7 @@ c.bar(lab, counts, color=cols, alpha=.75)
 for i, v in enumerate(counts):
     c.text(i, v + 1.5, str(v), ha="center", fontsize=10)
 c.set_ylabel("complexes (of 126)"); c.set_ylim(0, 118)
-c.set_title("C  Medium-or-better (DockQ ≥ 0.49)")
+c.set_title("C  Medium-or-better predictions (DockQ ≥ 0.49)")
 c.text(.5, .78, f"union: {counts[0]+counts[1]+counts[2]}/126", transform=c.transAxes,
        ha="center", fontsize=9)
 

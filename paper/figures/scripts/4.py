@@ -47,7 +47,7 @@ b.set_yscale("log"); b.set_xlabel("AF3 denoising step (of 200)")
 b.set_ylabel("mean Cα RMSD (Å)")
 b.axvline(158, ls="--", lw=1.2, c="#b5545c")
 b.text(152, 400, "step 158\n(< 1 Å)", fontsize=8, color="#b5545c", ha="right")
-b.set_title("B  AF3 converges in the last 20 %")
+b.set_title("B  AF3 convergence to final frame (n = 30)")
 b.legend(frameon=False, loc="lower left")
 
 # C -- time vs accuracy for the four tracks
@@ -64,7 +64,7 @@ base = s[s.track == "t1_baseline"].iloc[0]
 c.axhline(base.global_dockq_mean, ls=":", lw=1, c="#888")
 c.set_xlim(4.4, 11.4); c.set_ylim(0.66, 0.775)
 c.set_xlabel("GPU s per prediction"); c.set_ylabel("mean Global DockQ")
-c.set_title("C  Sampler shortcuts are free (n = 30)")
+c.set_title("C  Accuracy vs GPU time by sampler setting")
 c.annotate("", xy=(5.9, .692), xytext=(9.9, .692),
            arrowprops=dict(arrowstyle="->", color="#b5545c", lw=1.4))
 c.text(7.9, .684, "1.80× faster,  ΔDockQ −0.010 (p = 0.33)",
