@@ -1,0 +1,890 @@
+---
+title: "Two roads to the same TCR: MSA-based and language-model structure predictors reach equal accuracy on 126 post-cutoff TCR–pMHC complexes but disagree about which complexes are hard"
+author:
+  - "[Author list to be completed]"
+date: "28 August 2026"
+abstract: |
+  T cell receptor (TCR) recognition of peptide–MHC (pMHC) is the central
+  specificity event of cellular immunity, and structure prediction is now the
+  main route to modelling it at scale. Published benchmarks agree that
+  multiple-sequence-alignment (MSA)-based predictors, and AlphaFold 3 in
+  particular, lead the field, and that protein-language-model (PLM) predictors
+  trail them. We revisited that conclusion on a benchmark of 136 TCR–pMHC
+  entries released after the 30 September 2021 training cutoff shared by every
+  method tested, of which 126 (111 class I, 15 class II) carry a scoreable
+  experimental reference. All methods received byte-identical truncated inputs
+  and a single fixed chain convention, and every model was scored against
+  natives rebuilt from the biological assembly with an explicit identity chain
+  mapping. AlphaFold 3 (median Global DockQ 0.751) and ESMFold2, a
+  single-sequence diffusion predictor conditioned on a 6-billion-parameter
+  language model rather than on an MSA (0.736), were statistically
+  indistinguishable (paired Wilcoxon p = 0.68); both exceeded Protenix (0.701,
+  p = 0.045 and p = 0.0009) and the TCR-specialised TCRmodel2 (0.708 on the 111
+  class I targets) was not separable from either. Equal accuracy did not mean
+  equivalent behaviour. ESMFold2's ipTM tracked accuracy far more tightly than
+  AlphaFold 3's (Pearson r = 0.79 vs 0.66); AlphaFold 3 was more sensitive to
+  reference resolution; and the two models placed the TCR more than 90° apart
+  on 10 of 126 complexes while agreeing on the pMHC to within 0.44 Å. The Cα
+  RMSD between the two predictions — a quantity computable without any
+  experimental structure — predicted the worse of the two DockQ scores better
+  than either model's own confidence (Spearman ρ = −0.884 vs +0.60 and +0.64),
+  and the two methods together reached medium-or-better accuracy on 119 of 126
+  complexes against 107 and 115 individually. Instrumenting both samplers
+  showed the equal accuracy is reached by different routes: AlphaFold 3 is
+  still 44 Å from its answer at the midpoint of denoising and converges only in
+  the final fifth of its schedule, whereas ESMFold2 is within 6 Å at its
+  midpoint. Exploiting that, cutting AlphaFold 3 from 200 to 160 denoising
+  steps and from 5 diffusion samples to 1 gave a 1.80× speed-up on 30 complexes
+  at a cost of −0.010 Global DockQ (95% CI −0.032 to +0.007, p = 0.33). We
+  conclude that MSAs are not required for state-of-the-art TCR–pMHC modelling,
+  that cross-architecture agreement is a strong reference-free quality signal,
+  and that the default AlphaFold 3 sampler is substantially over-provisioned
+  for complexes of this size.
+keywords: [T cell receptor, peptide-MHC, structure prediction, AlphaFold 3, protein language model, DockQ, benchmark]
+---
+
+# 1 Introduction
+
+The αβ T cell receptor recognises a short peptide presented by a major
+histocompatibility complex (MHC) protein, and the geometry of that engagement —
+the docking angle of the TCR variable domains over the peptide-binding platform,
+and the conformations of the six complementarity-determining region (CDR) loops
+that contact the peptide — determines specificity. Experimental determination of
+TCR–pMHC complexes remains slow relative to the size of the repertoire, so
+computational modelling has become the practical route to structural hypotheses
+at scale, whether for epitope-specificity prediction, TCR engineering, or
+immunotherapeutic design [1–3].
+
+Deep-learning structure prediction transformed this problem twice. AlphaFold 2
+made accurate single-chain and many multi-chain predictions routine [4], though
+early benchmarks identified adaptive immune recognition — antibody–antigen and
+TCR–pMHC complexes in particular — as a systematic failure mode [5]. AlphaFold 3
+replaced the Structure Module with a diffusion head and reported substantially
+improved interface accuracy across biomolecular space [6], and TCR-specific
+adaptations such as TCRdock [7] and TCRmodel2 [8] narrowed the gap for this
+class of complex specifically. In parallel, protein language models made
+structure prediction possible without an MSA at all: ESMFold demonstrated that a
+sufficiently large language model encodes atomic-level structure in its
+representations [9], trading evolutionary coupling signal for a learned prior
+and an order-of-magnitude speed-up.
+
+Recent TCR–pMHC benchmarks have converged on a consistent ranking. Lu et al.
+evaluated thirteen methods on 70 post-cutoff complexes and concluded that
+"MSA-based methods, particularly AlphaFold3, consistently outperform all
+alternatives", with most PLM-based models underperforming except a
+PLM variant built on an AlphaFold-3-style architecture [10].
+Ascunce-París et al. reached the same conclusion on 265 class I complexes,
+reporting AlphaFold 3 as the best generaliser to post-training structures [11].
+Shi et al. found that TCR-specific tools derived from AlphaFold 2 gain interface
+accuracy at the cost of framework accuracy, and that CDR3 loops, docking
+orientation and class II MHC–peptide interfaces remain difficult for every
+method [12]. Yin et al. observed complementary behaviour between methods and
+pooling gains for antibody–peptide complexes [13]. Together these establish
+the field's working assumption: evolutionary information is what makes
+TCR–pMHC prediction work.
+
+That assumption is worth re-testing, for two reasons. First, the PLM predictors
+in those comparisons are predominantly ESMFold-generation models, whose
+structure module is a direct AlphaFold-2 descendant; a current-generation
+language-model predictor with a diffusion structure head is a different object.
+Second, and more importantly, a benchmark that ranks methods answers only the
+narrowest question one can ask of it. If two architectures that share almost
+nothing — one conditioned on a paired MSA and structural templates, one
+conditioned only on the query sequence — reach the same accuracy, then the
+interesting question is not which wins but *how each one gets there*, and
+whether their disagreements are usable.
+
+Here we assemble a benchmark of 136 TCR–pMHC entries released after 30 September
+2021, the training cutoff shared by AlphaFold 3, Protenix and ESMFold2, of which
+126 carry a scoreable experimental reference. Every method receives identical
+truncated inputs under one chain convention, and every prediction is scored
+against a native rebuilt from the correct biological assembly. We report
+interface accuracy (DockQ), TCR-specific accuracy (MHC-aligned weighted all-CDR
+Cα RMSD and framework-aligned CDR3 all-atom RMSD), confidence calibration,
+sensitivity to reference resolution and to training-set similarity, the
+structural anatomy of the disagreement between the two leading models, the
+internal trajectories of both diffusion samplers, and the wall-clock cost of the
+default AlphaFold 3 sampler settings.
+
+# 2 Materials and methods
+
+## 2.1 Benchmark set construction
+
+Candidate entries were drawn from the TCR3d database [1,3], which curates all
+known TCR complex structures and is the source used by the most closely related
+benchmark [10]. Restricting to αβ TCR complexes with an initial RCSB release
+date after 30 September 2021 gave 427 class I and 72 class II candidates. Of
+these, 136 were complete TCR–peptide–MHC complexes containing all of an MHC
+peptide-binding platform, a peptide, and paired TCR α and β variable domains
+(114 class I, 22 class II); the remainder were unliganded TCRs, pMHC-only
+entries, TCR-mimic antibody complexes, or otherwise incomplete triads and were
+not carried forward.
+
+All 136 entries were manually reviewed against their deposited coordinates and
+primary publications, and nine were flagged for review and excluded from
+scoring, in two classes:
+
+* **Non-standard peptide chemistry (five entries).** 8TRL, 8TRQ and 8TRR each
+  contain one citrulline and 9NIG contains two; 9WNT is a lipopeptide whose
+  attached lipid cannot be represented in a polymer sequence. Because standard
+  FASTA cannot encode these modified residues, and because the modification is
+  in every case a determinant of the interaction being modelled, sequence-input
+  prediction of these complexes is not well posed.
+* **Covalently tethered constructs (four entries).** In 8VD0, 8VQ8, 9AUD and
+  9C3E the peptide is fused to an MHC-containing construct through an engineered
+  linker (for example the peptide–linker–MHC-IIβ fusion
+  QVYSLIRPNENPAHK–GSGGSIEGRGGSGASGDS–MHC-IIβ in 8VQ8, and a 593-residue
+  single-chain construct containing peptide, linkers, β2-microglobulin and MHC-I
+  in 9C3E). Removing the linker and modelling the components as separate chains
+  alters the experimental connectivity, which would confound accuracy comparison.
+
+One further entry, 9J4S, was excluded at the reference-structure stage
+(Section 2.3), leaving **126 scoreable complexes: 111 class I and 15 class II**.
+
+We deliberately did not apply a redundancy filter or a resolution cut to the
+primary set. TCR variable-domain identity is a poor novelty axis — germline V-gene
+framework dominates a ~110-residue V domain — and filtering on it discards most
+of the set while retaining an idiosyncratic remainder (Section 3.8). Instead,
+similarity to the pre-cutoff structural record is measured explicitly and treated
+as a covariate, and the full threshold sweep is reported so that any reader who
+prefers a filtered view can read it off directly.
+
+## 2.2 Domain truncation and chain convention
+
+Each complex was truncated to the domains that constitute the TCR–pMHC interface.
+For class I, β2-microglobulin was removed and the MHC heavy chain was cut to its
+α1α2 peptide-binding platform (median 181 residues, range 161–181); for class II,
+the α1 and β1 domains were retained (81–85 and 89–93 residues). TCR chains were
+cut to their variable domains (α 101–114 residues, β 105–116). Prediction inputs
+used the complete deposited polymer sequences over those spans, including
+residues annotated as experimentally unobserved; accuracy calculations were
+restricted to residues with deposited atomic coordinates, and no missing
+coordinates were imputed.
+
+A single chain convention was used for every method, with no per-model remapping
+(Table 1).
+
+Table: **Benchmark chain convention.** Chain letters are used verbatim in every
+method's input and output; no per-model remapping is performed anywhere in the
+pipeline. β2-microglobulin is excluded.
+
+| Role                          | Class I | Class II |
+|:------------------------------|:-------:|:--------:|
+| MHC-I α1α2 / MHC-II α1        | A       | A        |
+| Peptide                       | B       | B        |
+| MHC-II β1                     | —       | C        |
+| TCR α variable                | C       | D        |
+| TCR β variable                | D       | E        |
+
+Class I predictions therefore carry chains A,B,C,D and class II A,B,C,D,E. Because
+downstream interface scoring assumes chain letters mean the same thing in every
+model's output, an automated check confirmed that the residues present in every
+prediction CIF matched the input FASTAs for all methods before scoring.
+
+## 2.3 Reference structures
+
+Experimental references were rebuilt from RCSB rather than used as deposited.
+For each entry, the chains named in the per-entry chain manifest were extracted
+and cropped to the benchmark FASTA span, with a fallback that searches every
+chain when the manifest's author chain is wrong (7Z50's peptide is deposited as
+chain T, not B). Alternate locations were resolved deterministically to the
+highest-occupancy conformer, with altloc A as tie-breaker.
+
+Cutting the right sequence is not sufficient — it must come from the right copy.
+Forty-six of the 136 entries are built from files holding several complete
+complexes, and the deposited asymmetric unit is frequently not a complex at all.
+Each rebuilt native was therefore measured for its own interfaces and repaired
+where necessary by one of two routes: fetching the author-defined biological
+assembly (`<PDB>-assembly<N>.cif`, ranking candidates by full-length chains,
+then a paired TCR, then peptide contact, then interface size), or re-imaging
+coordinates wrapped across the periodic boundary by sliding a disconnected group
+by whole unit cells. Six natives depend on these repairs (7L1D, 7RRG, 7SU9,
+7Z50, 9K2I, 9LLU); 7SU9 requires a single −a translation, which is not a
+biological-assembly operator and therefore appears in no assembly file.
+
+An automated audit checked four properties of every native: crop exactness
+against the FASTA, one connected complex, no better-contacting alternative chain
+combination, and all chains drawn from a single author-defined assembly. The
+last test is the strict one — a contact-count test alone cannot distinguish a
+crystal lattice contact between two copies from a real interface. It identified
+**9J4S**, for which neither author-defined assembly contains any contact between
+the TCR variable domains and the pMHC; the apparent interface obtained by mixing
+chains from different assemblies is a lattice contact. 9J4S was excluded, and a
+DockQ score is never computed for it.
+
+Four natives (9EJG, 9EJH, 9EJI, 9LLU) have a TCR that is docked on the MHC but
+not touching the peptide. This is biology — 9EJI is a published
+peptide-independent binder — and these entries were retained.
+
+## 2.4 Structure prediction methods
+
+Four methods were run on identical inputs.
+
+**AlphaFold 3** [6] predictions were obtained through the AlphaFold Server, which
+supplies MSAs and structural templates from its own pipeline and returns five
+ranked diffusion samples; the top-ranked model by ranking score was scored. The
+server enforces a 30 September 2021 training cutoff.
+
+**Protenix** [22], an open reproduction of the AlphaFold 3 architecture, was run
+through its public server with the same inputs, and the top-ranked model scored.
+
+**ESMFold2** (the `biohub/ESMFold2` checkpoint, revision `8fc3ff47`, conditioned on the `biohub/ESMC-6B` language
+model, revision `45b0fa5d`) [21] was run through the ESM SDK API as model
+`esmfold2-fast-2026-05` with the SDK defaults of 10 refinement loops and 100
+sampling steps. ESMFold2 is a diffusion structure predictor like AlphaFold 3 but
+takes **no MSA and no structural template**: its only input is the query
+sequence, embedded by a 6-billion-parameter protein language model. This is the
+architectural contrast the paper turns on, and it is a strict one — the two
+methods share the diffusion generative head and essentially nothing else on the
+conditioning side.
+
+**TCRmodel2** [8] was installed locally from the Pierce laboratory repository
+(commit `90536de`, AlphaFold 2.3 base, `alphafold_params_2022-12-06`) with
+`--max_template_date=2021-09-30` applied explicitly to both the TCR and the pMHC
+template searches; the default is effectively unrestricted, so this is
+load-bearing. TCRmodel2 accepts a fixed peptide length for class II and was
+therefore run on class I only, giving 111 predictions.
+
+Mean end-to-end runtimes were 5.2 s per complex for the ESMFold2 API (median,
+IQR 4.9–6.4 s) and 13.4 s per complex for a local AlphaFold 3 run at default
+sampler settings on one RTX PRO 6000 (Section 2.9).
+
+## 2.5 Accuracy metrics
+
+**Interface accuracy.** DockQ v2.1.3 [14,15] was run once per complex with an
+explicit identity chain mapping. Without one, DockQ optimises chain assignment
+and can swap the homologous TCRα and TCRβ chains, silently inflating scores. The
+primary reported quantity is DockQ v2's **Global DockQ**, its interface-size
+weighted score over the whole complex; per-pairwise-interface DockQ values are
+also retained, giving 6 interfaces per class I complex and 10 per class II
+complex. Standard CAPRI thresholds are used throughout (< 0.23 incorrect,
+0.23–0.49 acceptable, 0.49–0.80 medium, ≥ 0.80 high) [16].
+
+**TCR-specific accuracy.** Two metrics were computed on the same top-ranked
+predictions the DockQ workflow scores; predictions were never selected using a
+native RMSD. TCRα and TCRβ chains were annotated once per biological sequence
+with ANARCI [17] under IMGT numbering [18], and the annotation propagated to
+prediction and native coordinates through pairwise sequence alignment rather
+than through PDB residue numbering. CDR ranges were the inclusive IMGT intervals
+27–38 (CDR1), 56–65 (CDR2), 81–86 (CDR2.5) and 104–118 (CDR3); "all CDRs" means
+all four regions on both chains, eight in total.
+
+*MHC-aligned weighted all-CDR Cα RMSD* follows the TCRdock formulation [7,19].
+MHC residues are matched between prediction and native by sequence alignment; a
+single ordinary-least-squares Kabsch superposition of the class I peptide-binding
+platform (or, jointly, of both class II peptide-binding domains) is applied to
+the entire predicted complex, and no further fit is performed. Cα RMSD is then
+computed over the eight CDR regions with CDR3 residues weighted 3 and all others
+weighted 1:
+
+$$\mathrm{RMSD}_{w} = \sqrt{\frac{\sum_i w_i d_i^2}{\sum_i w_i}}$$
+
+Because there is no second fit, this metric measures how accurately the TCR is
+*docked* on the pMHC.
+
+*Framework-aligned CDR3 all-atom RMSD* measures the opposite quantity. For each
+chain independently, the predicted variable-domain framework (the IMGT-numbered
+variable domain excluding all four CDR regions) is superimposed on the native
+framework using matched non-hydrogen atoms, and all-heavy-atom RMSD is then
+computed over the corresponding CDR3 loop without further alignment, comparing
+only identically named atoms in sequence-matched, identity-matched residues.
+Cα-only versions are retained as quality-control columns.
+
+Every metric reports expected, matched and resolved residue counts, atom counts,
+coverage fraction and a pass/fail status; incomplete loops are kept separate from
+the complete-case analysis rather than silently scored. Validation tests confirm
+that a native scored against itself, and against a rigidly rotated and
+translated copy of itself, returns approximately zero; that displacing an intact
+TCR relative to a fixed MHC raises the MHC-aligned CDR RMSD while leaving
+framework-aligned CDR3 RMSDs near zero; that deforming a CDR3 loop raises its
+own framework-aligned RMSD; and that permuting chain identifiers changes nothing,
+because chain assignment is by sequence and biological role.
+
+## 2.6 Confidence and reference-free quality scores
+
+Each method's own interface confidence (ipTM, and pTM and mean pLDDT where
+available) was taken from its output. pDockQ [20] was computed per interface from
+the predicted structure and per-residue confidence, and averaged per complex. A
+published random-forest quality-tier classifier for TCR–pMHC models [11] was
+re-implemented against this benchmark's chain convention and evaluated on the
+subset of class I targets whose PDB identifiers do not appear in its training
+set (n = 27), alongside a composite score combining the weakest pairwise ipTM,
+pDockQ, CDR3α pLDDT and the worst pairwise PAE from a single AlphaFold 3
+prediction.
+
+## 2.7 Similarity to the pre-cutoff structural record
+
+Because neither AlphaFold 3's nor Protenix's actual training list is public, we
+used structures available in the PDB on or before 30 September 2021 as a
+reproducible proxy. Candidate reference entries were the union of TCR3d's class I
+and class II complex tables and the STCRDab all-structures summary [2] filtered
+to `TCRtype = abTCR` and `mhc_type ∈ {MH1, MH2}`; of 395 candidates, 259 were
+released on or before the cutoff per RCSB `initial_release_date`, yielding 1,112
+consistently cropped chains from 258 complete complexes. Every polymer entity of
+every reference entry was aligned by blastp against the benchmark's own cropped
+chains, and the best-scoring benchmark role defined both the role assignment and
+the crop, so reference chains are cut to exactly the domain boundaries the
+benchmark uses and role assignment never depends on a database's chain-letter
+column. Where an entry's two TCR entities both matched the same role, the pairing
+was forced and the weaker preference reassigned.
+
+Identity was reported over the benchmark chain length with ≥ 80% query coverage
+required. Peptides (4–16 residues) are too short for blastp heuristics and were
+instead locally aligned (BLOSUM62, gap −11/−1) against every reference peptide
+under the same coverage rule. The *closest complete reference complex* requires
+every corresponding chain to come from one reference entry, and is the entry
+maximising mean identity across them. No benchmark entry appears in the reference
+set; all 136 were released on or after 13 October 2021.
+
+## 2.8 Cross-model divergence
+
+Because AlphaFold 3 and ESMFold2 predict the same FASTA with the same chain
+letters and 1..N residue numbering, their predictions correspond residue-for-residue
+with no alignment step. For each complex we computed Cα RMSD between the two
+predictions in four interface frames (peptide–TCRα, peptide–TCRβ, MHC–TCRα,
+MHC–TCRβ; interface residues defined as the union over both predictions of Cα
+within 10 Å across the interface, matching DockQ's cutoff), the peptide RMSD
+after superposition on the MHC, and the peptide RMSD after superposition on
+itself. The rigid-body decomposition places both predictions in the MHC frame and
+reports the rotation and centre-of-mass offset carrying AlphaFold 3's TCR onto
+ESMFold2's, with the TCR's own internal RMSD reported for contrast.
+
+## 2.9 Sampler instrumentation and timing
+
+Both models' official samplers were patched observationally to retain the
+coordinate state after every production denoising step, changing no arithmetic:
+AlphaFold 3's `diffusion_head.sample` already computes and discards the per-step
+positions inside its scan, and the patch keeps them; ESMFold2's
+`DiffusionStructureHead.sample` holds its state in a local, so its installed
+source was rewritten at a unique anchor. Parity between instrumented and stock
+runs under the same seed was verified per model (mean |ΔDockQ| = 0.0008,
+maximum 0.0122).
+
+Sampler economy was measured on 30 complexes drawn with a frozen seed from the
+126 scoreable set (28 class I, 2 class II, 397–416 residues), run serially on one
+idle RTX PRO 6000 with identical MSAs and templates taken verbatim from the
+AlphaFold Server bundles the benchmark's own predictions came from, and the same
+per-complex seed. Four tracks were run: 200 steps × 5 samples (default), 160 × 5,
+200 × 1 and 160 × 1. All 30 complexes fall in AlphaFold 3's 512-token bucket, so
+JIT compilation and kernel autotuning happen once per track; both were charged to
+two warm-up predictions run and discarded before timing. Instrumentation costs
+~2% and was run as a separate pass, so the baseline track is stock AlphaFold 3.
+
+## 2.10 Statistics and software
+
+Paired method comparisons use the Wilcoxon signed-rank test on the complexes both
+methods predicted. Correlations are Pearson and Spearman with bootstrap
+confidence intervals (10,000 resamples, fixed seed); regressions use ordinary
+least squares with HC3 robust standard errors. Software versions: Python 3.13.9
+and 3.11.16, DockQ 2.1.3, ANARCI 1.3 (HMMER 3.4), Biopython 1.87/1.81, blastp
+2.12.0+, NumPy 2.3.5, SciPy 1.16.3, statsmodels 0.14.5, JAX 0.9.1,
+transformers 4.57.6, esm 3.3.0.
+
+# 3 Results
+
+## 3.1 Benchmark composition
+
+The 126 scoreable complexes comprise 111 class I and 15 class II entries, 112
+human and 14 mouse, released between 13 October 2021 and 29 July 2026. One
+hundred and twenty were determined by X-ray crystallography and six by cryo-EM,
+with resolutions from 1.54 to 4.44 Å (median 2.56 Å, IQR 2.20–3.00 Å). They span
+27 distinct MHC alleles — the most frequent being HLA-A\*02 (29), H2-Db (10),
+HLA-A\*11 (10), HLA-B\*27 (9), HLA-A\*24 (9) and HLA-E (7) — and 79 distinct
+peptide sequences of 8–15 residues (median 9).
+
+## 3.2 Overall interface accuracy
+
+Every method produced at least an acceptable model of every complex: Global DockQ
+never fell below 0.23 for any method on any of the 126 complexes (Figure 1A).
+Median Global DockQ was 0.751 for AlphaFold 3 (IQR 0.571–0.826), 0.736 for
+ESMFold2 (0.592–0.840), 0.708 for TCRmodel2 on its 111 class I targets
+(0.590–0.808) and 0.701 for Protenix (0.530–0.799).
+
+The two leading methods are not distinguishable. Paired over all 126 complexes,
+AlphaFold 3 minus ESMFold2 gives a mean difference of −0.016 and a median
+difference of −0.002 (Wilcoxon p = 0.68). Both, however, separate from Protenix:
+AlphaFold 3 +0.039 (p = 0.045) and ESMFold2 +0.055 (p = 0.0009). TCRmodel2 was
+not separable from any of the three on its class I subset (all p > 0.23).
+
+The CAPRI-class view (Figure 1B) tells the same story with a different emphasis.
+No method produced an incorrect model. ESMFold2 placed the largest fraction in
+the medium-or-better band (91.3%: 54.0% medium, 37.3% high), followed by
+TCRmodel2 (88.3%), AlphaFold 3 (84.9%: 50.0% medium, 34.9% high) and Protenix
+(79.4%). AlphaFold 3's slightly higher median therefore coexists with a slightly
+heavier acceptable-only tail than ESMFold2's — the two distributions cross.
+
+This is the paper's first result, and it contradicts the current consensus: a
+predictor that sees no MSA and no structural template matches AlphaFold 3 on
+post-cutoff TCR–pMHC complexes.
+
+![**Interface accuracy on 126 post-cutoff TCR–pMHC complexes.**
+(**A**) Distribution of Global DockQ per method; box, IQR and median; dots, individual
+complexes; dashed lines, CAPRI thresholds. TCRmodel2 covers the 111 class I complexes only.
+(**B**) The same data as CAPRI classes. No method produced an incorrect model of any
+complex.](paper/figures/outputs/Figure_1.png){width=100%}
+
+## 3.3 The difficulty is entirely in the TCR docking
+
+Global DockQ is weighted across all interfaces of the complex, several of which
+are easy. Decomposing it (Table 2) shows where the accuracy actually lives. The
+MHC–peptide interface is effectively solved by every method: median DockQ 0.940
+(AlphaFold 3), 0.939 (ESMFold2), 0.933 (Protenix) and 0.931 (TCRmodel2), with
+the class II MHCα–peptide and peptide–MHCβ interfaces close behind (0.90–0.91).
+The TCRα–TCRβ pairing is also reliable (0.79–0.82). Everything that separates
+methods, and everything that separates easy complexes from hard ones, is in the
+four TCR-versus-pMHC interfaces, whose medians run 0.55–0.71. One class II
+interface is a partial exception: AlphaFold 3 models the MHC-IIα–MHC-IIβ
+heterodimer pairing itself at median DockQ 0.628, against 0.845 for ESMFold2 and
+0.789 for Protenix, the single largest per-interface deficit for AlphaFold 3 in
+the table.
+
+Table: **Median per-interface DockQ by method.** *n* is the number of
+complexes contributing that interface (an interface with no native contacts is
+not scored, so peptide–TCR interfaces are absent in a few complexes whose TCR
+does not touch the peptide). The final row collapses the four TCR-versus-pMHC
+interfaces to one value per complex, then takes the median over complexes.
+
+| Interface                          |  *n* |    AF3 | Protenix | ESMFold2 | TCRmodel2 |
+|:-----------------------------------|-----:|-------:|---------:|---------:|----------:|
+| MHC-I – peptide | 111 | 0.940 | 0.933 | 0.939 | 0.931 |
+| MHC-IIα – peptide | 15 | 0.904 | 0.911 | 0.905 | — |
+| peptide – MHC-IIβ | 15 | 0.909 | 0.887 | 0.902 | — |
+| TCRα – TCRβ | 126 | 0.798 | 0.800 | 0.821 | 0.791 |
+| MHC-IIα – MHC-IIβ | 15 | 0.628 | 0.789 | 0.845 | — |
+| MHC-I – TCRα | 111 | 0.672 | 0.590 | 0.653 | 0.644 |
+| MHC-I – TCRβ | 110 | 0.686 | 0.551 | 0.696 | 0.611 |
+| peptide – TCRα | 120 | 0.710 | 0.605 | 0.676 | 0.641 |
+| peptide – TCRβ | 122 | 0.687 | 0.633 | 0.690 | 0.681 |
+| MHC-IIα – TCRα | 11 | 0.615 | 0.600 | 0.714 | — |
+| MHC-IIα – TCRβ | 12 | 0.773 | 0.767 | 0.839 | — |
+| MHC-IIβ – TCRα | 15 | 0.720 | 0.687 | 0.819 | — |
+| MHC-IIβ – TCRβ | 15 | 0.719 | 0.519 | 0.764 | — |
+| **All TCR–pMHC interfaces (per complex)** | 126 | **0.692** | **0.621** | **0.694** | **0.632** |
+
+Collapsing those four interfaces to one value per complex, median TCR-versus-pMHC
+DockQ is 0.694 for ESMFold2, 0.692 for AlphaFold 3, 0.632 for TCRmodel2 and
+0.621 for Protenix. On this stricter reading the acceptable-or-better rate falls
+from 100% to 92.9% (ESMFold2), 90.1% (TCRmodel2), 87.3% (AlphaFold 3) and 84.1%
+(Protenix), and the high-accuracy rate is 28.6%, 27.8%, 19.8% and 17.5%
+respectively. Roughly one complex in ten is still docked incorrectly by the best
+methods.
+
+## 3.4 CDR-level accuracy separates docking error from loop error
+
+The two TCR-specific metrics decompose that residual error (Table 3).
+
+Table: **TCR-specific structural accuracy, median (IQR) in ångströms, class I and II
+pooled.** The MHC-aligned metric applies one rigid superposition
+of the predicted MHC peptide-binding platform onto the native and then measures
+all eight CDRs with CDR3 residues weighted 3, so it reports docking accuracy. The
+framework-aligned metrics fit each TCR chain's variable-domain framework
+independently and then measure the CDR3 loop, so they report loop accuracy
+independent of docking. TCRmodel2 is scored on the 72 class I predictions that
+passed CDR annotation and coverage checks.
+
+| Metric                                     |              AF3 |         Protenix |         ESMFold2 |        TCRmodel2 |
+|:-------------------------------------------|:-----------------|:-----------------|:-----------------|:-----------------|
+| MHC-aligned weighted all-CDR Cα RMSD | 2.84 (1.61-5.56) | 3.82 (2.10-7.47) | 2.75 (1.60-5.24) | 3.53 (2.32-4.71) |
+| Framework-aligned CDR3α all-atom RMSD | 1.94 (1.35-2.88) | 2.33 (1.53-3.08) | 1.81 (1.25-2.59) | 1.97 (1.48-2.96) |
+| Framework-aligned CDR3β all-atom RMSD | 1.73 (1.17-2.49) | 1.93 (1.40-2.60) | 1.56 (1.13-2.26) | 1.80 (1.42-2.61) |
+| *n* complexes | 126 | 126 | 126 | 72 |
+
+The
+MHC-aligned weighted all-CDR Cα RMSD, which measures docking with no second fit,
+has a median of 2.75 Å for ESMFold2, 2.84 Å for AlphaFold 3 and 3.82 Å for
+Protenix over the 126 complexes, and 3.53 Å for TCRmodel2 over the 72 class I
+predictions that passed annotation and coverage checks. The distributions are
+strongly right-skewed — means are 5.45, 6.34, 4.83 and 7.72 Å and maxima exceed
+50 Å — confirming that the aggregate is dominated by a minority of complexes in
+which the TCR is placed in an entirely wrong orientation, not by a uniform
+degradation.
+
+Framework-aligned CDR3 RMSD, which removes docking error by construction, is far
+more uniform across methods. Median CDR3α all-heavy-atom RMSD is 1.81 Å
+(ESMFold2), 1.94 Å (AlphaFold 3), 1.97 Å (TCRmodel2) and 2.33 Å (Protenix);
+median CDR3β is 1.56, 1.73, 1.80 and 1.93 Å. The spread across methods for loop
+conformation (0.5 Å) is an order of magnitude smaller than the spread across
+complexes for docking (tens of ångströms), and the maxima are bounded — no method
+exceeds 7.9 Å on CDR3α or CDR3β. In other words, all four methods build
+approximately the same quality of CDR3 loop, and differ almost entirely in where
+they put it. This is consistent with Shi et al.'s observation that CDR3 loops and
+docking orientation are separate, and separately unsolved, problems [12].
+
+Two secondary observations follow from Table 3. First, ESMFold2's advantage is
+concentrated in the CDR3β loop and in class II: its class II medians are 1.76 Å
+(all-CDR), 1.82 Å (CDR3α) and 1.34 Å (CDR3β), against AlphaFold 3's 2.37, 2.37
+and 2.05 Å. Second, TCRmodel2's class I all-CDR distribution is the *tightest* of
+the four (mean 4.83 Å, SD 5.17 Å, maximum 24.4 Å, against AlphaFold 3's 6.18,
+9.31 and 52.7 Å): the TCR-specific model is worse on average but fails less
+catastrophically, which is what one expects from a method whose template search
+is restricted to TCR and MHC structures.
+
+## 3.5 MHC class
+
+Class II is not harder than class I on this benchmark (Figure 2C). Median Global
+DockQ for class II versus class I is 0.752 versus 0.750 (AlphaFold 3), 0.742
+versus 0.736 (ESMFold2) and 0.713 versus 0.698 (Protenix); every difference is
+well inside the spread, and the class II subset is small (n = 15). ESMFold2's
+class II mean (0.743) is its highest subgroup mean. We note this mainly as a
+caution: with 15 class II complexes, this benchmark cannot resolve a class effect
+of the size other studies report, and the TCRmodel2 comparison is class I only by
+construction.
+
+## 3.6 Sensitivity to reference resolution
+
+Accuracy declines with worsening reference resolution for every method, but not
+equally (Figure 2B). Pearson r between resolution and Global DockQ is −0.292 for
+AlphaFold 3 (p = 0.001), −0.266 for ESMFold2 (p = 0.003), −0.238 for TCRmodel2
+(p = 0.012) and −0.184 for Protenix (p = 0.040, Spearman p = 0.065, not
+significant). Part of this is unavoidable — a lower-resolution reference is a
+noisier target — but the ordering is informative: the two methods most sensitive
+to reference quality are the two most accurate ones, which is what one expects if
+the residual error in the best models is approaching the coordinate uncertainty
+of the references themselves.
+
+## 3.7 The two architectures differ sharply in confidence calibration
+
+Interface confidence predicts accuracy for all three general methods, but
+ESMFold2's ipTM does so substantially better (Figure 2A). Pearson r between ipTM
+and Global DockQ is 0.793 for ESMFold2 (Spearman ρ = 0.777), against 0.660 for
+AlphaFold 3 (ρ = 0.654) and 0.657 for Protenix (ρ = 0.679). The regression lines
+also differ in intercept: ESMFold2 reaches a given DockQ at a systematically
+lower ipTM than the other two, so its confidence is both more conservative and
+better ordered. pDockQ shows the same ranking with lower correlations overall
+(ESMFold2 r = 0.676, Protenix 0.611, AlphaFold 3 0.577).
+
+For AlphaFold 3 specifically, single global confidence scores leave accuracy on
+the table. Replacing ipTM with the weakest *pairwise* ipTM raises Pearson r from
+0.660 to 0.695 over all 126 complexes, and a four-term composite of the weakest
+pairwise ipTM, pDockQ, CDR3α pLDDT and the worst pairwise PAE — computed from a
+single AlphaFold 3 prediction, with no second structure and no reference —
+reaches r = 0.712 (95% CI 0.617–0.791) and ρ = 0.725 (0.624–0.803). On the same
+126 complexes a published random-forest quality-tier classifier [11] reaches
+r = 0.662 and ρ = 0.674; the paired difference is +0.050 Pearson (95% bootstrap
+CI +0.015 to +0.085) and +0.051 Spearman (+0.008 to +0.098). On the 27 class I
+targets whose PDB identifiers are absent from that classifier's training set, the
+classifier and ipTM are statistically indistinguishable (ρ = 0.770 [0.485, 0.925]
+versus 0.678 [0.360, 0.874]; paired difference +0.092, CI −0.041 to +0.263). We
+therefore do not claim a resolved advantage for any single-model score on unseen
+targets — but we do note that all of these scores are beaten by a quantity that
+requires no learned quality model at all (Section 3.9).
+
+![**Determinants of interface accuracy.** (**A**) Global DockQ against each method's own
+ipTM, with per-method linear fits and Pearson *r*. ESMFold2's confidence is both more
+conservative — it reaches a given DockQ at a lower ipTM — and better ordered. (**B**) Global
+DockQ against the resolution of the experimental reference. (**C**) Global DockQ by MHC
+class. Shaded bands are the CAPRI quality classes.](paper/figures/outputs/Figure_2.png){width=100%}
+
+## 3.8 Similarity to pre-cutoff structures is a third-order effect
+
+Accuracy rises weakly but significantly with similarity to the pre-cutoff
+structural record. Pooled over 245 predictions, the strongest single predictor is
+not any individual chain but the composite mean identity over the closest
+*complete* pre-cutoff complex (Spearman ρ = +0.271, p = 1.8 × 10⁻⁵); the
+individual components are weaker (TCRβ +0.192, peptide +0.151, TCRα +0.127, MHC
++0.059, n.s.). The full pre-specified model
+(DockQ ~ method + TCRα + TCRβ + peptide + MHC + class) explains 7.2% of the
+variance (adjusted R² = 0.048), with TCRβ identity worth +0.041 DockQ per 10
+identity points (p = 0.024) and peptide identity +0.015 (p = 0.005). Between the
+extreme bins of the composite score, mean DockQ rises from 0.515 to 0.702
+(AlphaFold 3) and 0.438 to 0.661 (Protenix).
+
+The negative MHC coefficient in that model is an artefact of no variance rather
+than evidence that MHC familiarity hurts: MHC identity has median 100% and IQR
+99.4–100%, because 111 of 126 targets are class I HLA alleles whose
+peptide-binding domain is in the PDB many times over. A useful counterexample:
+two targets have a 100%-identical complete pre-cutoff complex — 7RTR (identical
+to 7N1F) and 9NDS (identical to 4FTV) — and AlphaFold 3 still scores 7RTR at only
+0.36, CAPRI acceptable. Sequence-level availability of the answer does not
+guarantee a good prediction.
+
+The threshold sweep matters for how method comparisons should be read. Filtering
+at ≤ 95% maximum TCR identity retains 69 targets and barely moves absolute
+accuracy (AlphaFold 3 mean DockQ 0.585 → 0.547; Protenix 0.515 → 0.506), but it
+dissolves the AlphaFold 3–over–Protenix result: the paired advantage falls from
++0.063 (p = 0.031) to +0.027 (p = 0.40), and at ≤ 90% it reverses sign. Below 95%
+the retained samples (14, 7 and 1 targets) are too small to conclude anything
+either way. The honest statement is that the AlphaFold 3 advantage over Protenix
+on this benchmark is carried by targets with a near-duplicate TCR in the
+pre-cutoff PDB. It is also the reason we did not build the primary benchmark on a
+TCR-identity filter: only 7 of 126 targets fall below 70% identity, and those 7
+are not "hard targets" but mostly unusual or non-human TCRs.
+
+## 3.9 Where AlphaFold 3 and ESMFold2 disagree, and what that disagreement is worth
+
+Equal accuracy is not the same as equal predictions. Across the 126 complexes the
+median Cα RMSD between the AlphaFold 3 and ESMFold2 predictions of the same FASTA
+is 1.35 Å, but the distribution runs to 13.9 Å, and the disagreement is
+anatomically specific. The two models agree closely on everything except where
+the TCR sits: median peptide RMSD in the MHC frame is 0.44 Å and median peptide
+conformation RMSD is 0.33 Å, and the median internal RMSD of the TCR module
+itself is 0.74 Å — but the median MHC–TCRα and MHC–TCRβ interface RMSDs are 1.62
+and 1.63 Å, and the rigid-body decomposition gives a median TCR rotation of 11.1°
+with a tail reaching 177°. On 20 of 126 complexes the two models place the TCR
+more than 30° apart, and on 10 of them more than 90° apart, while building the
+same pMHC and the same TCR fold. The disagreement is a docking disagreement, not
+a folding one.
+
+That disagreement is a strong, entirely reference-free predictor of accuracy
+(Figure 3A). Cross-model Cα RMSD correlates with AlphaFold 3's Global DockQ at
+Spearman ρ = −0.756 and with ESMFold2's at ρ = −0.670, and with the *worse* of
+the two at **ρ = −0.884** (p = 1.1 × 10⁻⁴²). For comparison, on the same 126
+complexes AlphaFold 3's own ipTM predicts that worse-of-two value at ρ = +0.604
+and ESMFold2's at ρ = +0.639. Cross-architecture agreement is therefore a better
+native-free quality signal than either model's internal confidence, than pDockQ,
+and than the composite and random-forest scores of Section 3.7 — and it requires
+no confidence head, no training, and no calibration.
+
+By divergence quartile (Figure 3B), median Global DockQ falls from 0.860
+(AlphaFold 3) and 0.862 (ESMFold2) in the most-agreeing quartile to 0.518 and
+0.564 in the most-divergent one. Critically, the two models mostly fail on the
+*same* complexes: both quartile trends are parallel, and among the 20 most
+divergent complexes, 4 are failed by both at the medium threshold while 12 are
+solved by exactly one.
+
+That residual complementarity is worth having (Figure 3C). At DockQ ≥ 0.49,
+AlphaFold 3 succeeds on 107 of 126 complexes and ESMFold2 on 115; the two
+together succeed on 119 (103 both, 4 AlphaFold 3 only, 12 ESMFold2 only, 7
+neither). Pooling an MSA-based and a language-model-based predictor therefore
+raises the medium-or-better rate from 85% or 91% to 94% — echoing the pooling
+gains Yin et al. report for antibody–peptide complexes [13] — and, because
+disagreement itself flags the failures, the pool comes with a built-in triage
+signal.
+
+Two related class II entries illustrate the pattern concretely. 7SG1 and 7SG2 are
+HLA-DQ2 complexes with closely related gluten-derived peptides. On 7SG2 both
+models are correct (AlphaFold 3 0.706, ESMFold2 0.642) and their predictions
+differ by 2.72 Å with a 14° TCR rotation. On 7SG1 the models diverge by 3.56 Å
+with a 26° rotation, and AlphaFold 3 drops to 0.396 while ESMFold2 holds at
+0.736. Both models report high confidence on both complexes (AlphaFold 3 ipTM
+0.87 and 0.92; ESMFold2 0.81 and 0.83) — the confidence heads do not see the
+failure, and the disagreement does.
+
+![**Cross-architecture disagreement is a reference-free accuracy signal.**
+(**A**) Cα RMSD between the AlphaFold 3 and ESMFold2 predictions of the same sequence
+against the worse of their two Global DockQ scores. (**B**) Global DockQ by quartile of
+that divergence; the two methods degrade together. (**C**) Complexes reaching
+medium-or-better accuracy: individually, jointly, and neither.](paper/figures/outputs/Figure_3.png){width=100%}
+
+## 3.10 The two samplers reach the same answer by different routes
+
+Instrumenting both diffusion samplers on the same complexes shows that the
+equality of outcome conceals very different dynamics (Figure 4A). AlphaFold 3
+begins denoising from an initial noise scale of ~2,560 Å and is still ~44 Å from
+the native at the midpoint of its 200-step schedule; ESMFold2 begins at ~256 Å
+and is already within ~5.7 Å at its own midpoint. Measured as the fraction of the
+schedule at which the trajectory comes permanently within 1 Å of its own final
+frame, AlphaFold 3 converges at 73% of its steps and ESMFold2 at 58%. AlphaFold 3
+spends most of its schedule in a regime where, at the scale the noise schedule
+sets, no structure has settled at all; ESMFold2 commits early and refines.
+
+The same behaviour at scale (Figure 4B, 30 complexes × 5 samples = 30,000
+recorded frames) puts AlphaFold 3's convergence in a narrow window. Mean Cα RMSD
+to the final frame of the same sample falls below 2.0 Å at step 150 and below
+1.0 Å at step 158; every complex is within 1.0 Å by step 159; accuracy against
+the native plateaus at 3.37 Å around step 163; and mean RMSD to the final frame
+falls below 0.5 Å at step 164. Four independent criteria land between steps 150
+and 164 of 200. For roughly the first 140 steps the state is noise at the scale
+the schedule sets — AlphaFold 3's schedule holds σ above 5 Å until ~70% of the
+way through.
+
+## 3.11 The default AlphaFold 3 sampler is over-provisioned
+
+If the trajectory has effectively converged by step ~160, the last 40 steps and
+the four extra diffusion samples should be nearly free to remove. They are
+(Figure 4C, Table 4). Over the same 30 complexes, same MSAs, same seeds, run
+serially on one idle GPU:
+
+Table: **AlphaFold 3 sampler economy on 30 complexes.** Same complexes, same MSAs
+and templates, same per-complex seed, run serially on one idle RTX PRO 6000.
+Confidence intervals are paired bootstrap; *p* values are paired tests against the
+baseline track. GPU seconds are mean ± SD over the 30 complexes and
+exclude a constant 3.3 s of CPU featurisation.
+
+| Track       | Steps × samples | GPU s per prediction | Speed-up  | Mean Global DockQ | Δ vs baseline (95% CI)  | Paired *p* |
+|:------------|:----------------|:---------------------|----------:|------------------:|:------------------------|-----------:|
+| Baseline    | 200 × 5         | 10.04 ± 0.03         | 1.00×     | 0.7212            | —                       | —          |
+| Fewer steps | 160 × 5         | 8.79 ± 0.03          | 1.14×     | 0.7143            | −0.007 (−0.026, +0.007) | 0.43       |
+| One sample  | 200 × 1         | 6.02 ± 0.01          | 1.67×     | 0.7143            | −0.007 (−0.021, +0.006) | 0.34       |
+| Both        | 160 × 1         | 5.57 ± 0.01          | **1.80×** | 0.7109            | −0.010 (−0.032, +0.007) | 0.33       |
+
+Every confidence interval straddles zero, no track loses a complex from the
+acceptable band (30/30 everywhere), and the high-accuracy fraction moves from
+0.367 to 0.333 — one complex. Adding the constant 3.3 s of CPU featurisation
+gives the end-to-end figure: 13.4 s → 8.9 s per complex, or 401 s → 267 s for all
+30. Note that the 160-step track is not the 200-step trajectory stopped early —
+AlphaFold 3 re-discretises the same σ range into 160 coarser steps — so this is
+an experiment testing the convergence analysis, not a restatement of it.
+
+The speed-up saturates at 1.8× for a structural reason. Fitting
+*t* = trunk + *c* × (steps × samples) across all 120 timed predictions gives a
+fixed trunk of **4.86 s** and **5.08 ms per sample-step** (R² = 0.995). Half of a
+default AlphaFold 3 run on a complex of this size is the Pairformer trunk and its
+10 recycles, which neither shortcut touches; driving diffusion cost to zero would
+give at most 1.9×. Dropping from five samples to one also costs the ranking step
+— AlphaFold 3 normally returns the best of five by ranking score — and on this
+sample that selection is worth −0.007 DockQ, which is not detectable at n = 30.
+
+![**Both samplers reach the answer, by different routes, and earlier than the
+schedule assumes.** (**A**) Cα RMSD to the native along the denoising trajectory for four
+complexes traced in both models; AlphaFold 3 (200 steps, initial σ ≈ 2,560 Å) is still tens
+of ångströms out at its midpoint, ESMFold2 (68 recorded steps, initial σ ≈ 256 Å) is within
+a few ångströms. (**B**) AlphaFold 3 convergence to its own final frame over 30 complexes ×
+5 samples; band spans median to 90th percentile. (**C**) GPU time against mean Global DockQ
+for four sampler configurations on the same 30 complexes.](paper/figures/outputs/Figure_4.png){width=100%}
+
+# 4 Discussion
+
+**MSAs are not required for state-of-the-art TCR–pMHC modelling.** The clearest
+result here is a negative one: on 126 post-cutoff complexes, a diffusion
+predictor conditioned only on a protein language model matched AlphaFold 3
+running with server-supplied MSAs and templates (median Global DockQ 0.736 vs
+0.751, paired p = 0.68), and exceeded it in the fraction of medium-or-better
+models (91.3% vs 84.9%). This differs from the current consensus [10,11], and we
+think the difference is generational rather than contradictory: the PLM
+predictors in those comparisons are ESMFold-generation models whose structure
+module descends from AlphaFold 2, whereas ESMFold2 pairs a 6-billion-parameter
+language model with a diffusion structure head. The most informative data point
+in Lu et al. is arguably that their best PLM method was the one built on an
+AlphaFold-3-style architecture [10]; our result is the same observation with the
+architecture gap closed further. It is worth being explicit about why this is
+plausible for *this* problem in particular: TCR variable domains and MHC
+platforms are among the most heavily sequenced and most heavily crystallised
+folds in existence, so an MSA adds little that a large language model has not
+already internalised, while the thing an MSA cannot supply — the relative
+orientation of two domains that have no coevolutionary history with each other —
+is exactly what remains unsolved.
+
+**The unsolved problem is docking, and it is the same problem for everyone.** The
+per-interface decomposition and the two CDR metrics point the same way. MHC–peptide
+interfaces are modelled at DockQ ≈ 0.94 by all four methods; CDR3 loops are built
+to within 1.6–2.3 Å heavy-atom RMSD of the native by all four after framework
+alignment, with a spread across methods of half an ångström. Docking accuracy, by
+contrast, spans tens of ångströms, is right-skewed with catastrophic outliers, and
+accounts for essentially all of the difference between methods and between
+complexes. This reproduces the decomposition Shi et al. reported [12] on a larger
+and more recent set, and it argues that further progress on TCR–pMHC modelling
+will come from the placement problem, not from loop refinement.
+
+**Cross-architecture agreement is the best reference-free quality signal we
+measured.** The Cα RMSD between an AlphaFold 3 and an ESMFold2 prediction of the
+same sequence predicted the worse of their two DockQ scores at ρ = −0.884,
+against +0.60 to +0.64 for the models' own ipTM values, ~0.68 for pDockQ, and
+~0.67–0.73 for learned quality scores. This is not a subtle effect and it is
+cheap: one extra prediction from a method that runs in five seconds. It also has
+a mechanistic reading. Two models that share a generative head but nothing on the
+conditioning side have largely independent failure modes for the docking problem,
+so their agreement is evidence in a way that a single model's self-reported
+confidence — which, as 7SG1 shows, can be high on a wrong answer — is not. The
+practical recommendation follows directly: for any TCR–pMHC modelling campaign,
+run both, use the agreement as the triage score, and take the union when a
+decision must be made. On this benchmark that raises the medium-or-better rate
+from 85% (AlphaFold 3 alone) to 94%.
+
+**Default sampler settings are over-provisioned for complexes of this size.**
+AlphaFold 3's denoising trajectory has converged to within 1 Å of its own answer
+by step 158 of 200, and running with 160 steps and a single diffusion sample
+returned the answer in 55% of the GPU time with no detectable accuracy cost over
+30 complexes. We would emphasise the scope: n = 30, one GPU, one seed per complex,
+and one narrow size regime (397–416 residues, all in AlphaFold 3's 512-token
+bucket). Larger complexes shift the trunk/diffusion split — the trunk scales
+roughly quadratically in the pair track while diffusion scales with atom count —
+so the 1.9× ceiling moves. Within this regime, though, the finding is
+straightforward: for high-throughput TCR–pMHC screening the default settings buy
+almost nothing, and the compute is better spent on a second architecture, which
+Section 3.9 shows is worth considerably more than a fifth diffusion sample.
+
+**On benchmark design.** Two methodological points generalise beyond this set.
+First, native construction is not a solved preprocessing step. Forty-six of 136
+entries are built from files holding several complete complexes, and the
+deposited asymmetric unit is often not a complex; six natives required a
+biological-assembly fetch or a periodic-boundary repair, and one (9J4S) had no
+physical TCR–pMHC interface in any author-defined assembly, its apparent
+interface being a lattice contact between two copies. A contact-count check
+cannot catch this — only requiring all chains to come from a single author-defined
+assembly does. A benchmark that scores such an entry is scoring noise. Second,
+redundancy filtering on TCR identity is less informative than it appears for this
+class of complex: germline V-gene framework dominates a ~110-residue variable
+domain, so 119 of 126 targets sit above 70% identity to something pre-cutoff, and
+the ≤ 90% subset is 14 mostly non-human or atypical TCRs rather than a
+representative hard set. The composite identity to the closest *complete*
+pre-cutoff complex separates the benchmark far better and at usable sample sizes
+(46 targets have no complete pre-cutoff match at all). We report both, and we
+report explicitly that the AlphaFold 3–over–Protenix result does not survive a
+95% TCR-identity filter, which is the kind of statement benchmark papers should
+make routinely.
+
+## 4.1 Limitations
+
+The class II subset (n = 15) is too small to resolve class effects, and TCRmodel2
+was run on class I only because it accepts a fixed class II peptide length. Nine
+entries were excluded for non-standard peptide chemistry or covalent tethering,
+both of which are biologically interesting categories that sequence-input
+prediction currently cannot address; excluding them is a limitation of the
+methods, not only of the benchmark. "Training set" is a proxy throughout —
+neither AlphaFold 3's nor Protenix's actual training list is public, and we use
+PDB availability on or before 30 September 2021 as the closest reproducible
+stand-in, which cannot account for sequence databases or non-TCR structures the
+models also saw. The reference set for that analysis is only as complete as
+TCR3d ∪ STCRDab. AlphaFold 3 and Protenix were run through public servers, so
+their exact data pipelines are outside our control; ESMFold2 was likewise run
+through the ESM SDK API, and the trajectory analysis of Section 3.10 used the
+local `biohub/ESMFold2` checkpoint rather than the API model, so its per-frame
+DockQ values are not interchangeable with the benchmark's. The composite
+confidence score of Section 3.7 was developed on this benchmark and requires
+independent validation. Finally, the sampler-economy result is a single-seed,
+single-GPU, 30-complex experiment in one size regime, as stated above.
+
+# 5 Conclusions
+
+On 126 TCR–pMHC complexes released after the shared 30 September 2021 training
+cutoff, a single-sequence protein-language-model diffusion predictor matched
+AlphaFold 3 and beat an AlphaFold 3 reproduction, with no MSA and no structural
+template. Both, and a TCR-specialised AlphaFold 2 derivative, build the pMHC and
+the CDR3 loops to comparable accuracy and differ almost entirely in where they
+place the TCR. The disagreement between the two architectures is anatomically
+confined to that placement, and it predicts accuracy better than any confidence
+score we tested, making a two-architecture ensemble both more accurate (94% vs
+85% medium-or-better) and self-triaging. Finally, AlphaFold 3's denoising
+trajectory converges by step ~158 of 200, and reducing the sampler to 160 steps
+and one diffusion sample returns the same answers in 55% of the GPU time. For
+practitioners, the combined recommendation is concrete: run two architectures at
+reduced sampler settings rather than one architecture at defaults, and use their
+agreement to decide which models to trust.
+
+# Data and code availability
+
+The benchmark inputs (136 truncated FASTAs, chain manifests, review records),
+the rebuilt experimental references and their provenance manifest, all
+predictions, and the complete scoring, analysis and figure code are contained in
+the accompanying repository. Per-interface DockQ results are provided in long
+format (one row per interface plus Global DockQ), TCR CDR RMSD results per
+prediction with full coverage and quality-control columns, and the sampler-economy
+tracks with per-complex timings and paired differences. All analyses are
+reproducible from the recorded commands; software versions and model checkpoint
+revisions and hashes are recorded in the accompanying manifests.
+
+# References
+
+1. Gowthaman R, Pierce BG. TCR3d: The T cell receptor structural repertoire database. *Bioinformatics* 2019;35(24):5323–5325. doi:10.1093/bioinformatics/btz517
+2. Leem J, de Oliveira SHP, Krawczyk K, Deane CM. STCRDab: the structural T-cell receptor database. *Nucleic Acids Res* 2018;46(D1):D406–D412. doi:10.1093/nar/gkx971
+3. Lin V, Cheung M, Gowthaman R, Eisenberg M, Baker BM, Pierce BG. TCR3d 2.0: expanding the T cell receptor structure database with new structures, tools and interactions. *Nucleic Acids Res* 2025;53(D1):D604–D608. doi:10.1093/nar/gkae840
+4. Jumper J, Evans R, Pritzel A, et al. Highly accurate protein structure prediction with AlphaFold. *Nature* 2021;596(7873):583–589. doi:10.1038/s41586-021-03819-2
+5. Yin R, Feng BY, Varshney A, Pierce BG. Benchmarking AlphaFold for protein complex modeling reveals accuracy determinants. *Protein Sci* 2022;31(8):e4379. doi:10.1002/pro.4379
+6. Abramson J, Adler J, Dunger J, et al. Accurate structure prediction of biomolecular interactions with AlphaFold 3. *Nature* 2024;630(8016):493–500. doi:10.1038/s41586-024-07487-w
+7. Bradley P. Structure-based prediction of T cell receptor:peptide-MHC interactions. *eLife* 2023;12:e82813. doi:10.7554/eLife.82813
+8. Yin R, Ribeiro-Filho HV, Lin V, Gowthaman R, Cheung M, Pierce BG. TCRmodel2: high-resolution modeling of T cell receptor recognition using deep learning. *Nucleic Acids Res* 2023;51(W1):W569–W576. doi:10.1093/nar/gkad356
+9. Lin Z, Akin H, Rao R, et al. Evolutionary-scale prediction of atomic-level protein structure with a language model. *Science* 2023;379(6637):1123–1130. doi:10.1126/science.ade2574
+10. Lu J, Zhu X, Hu X, Zhang C, Feng F. Benchmarking TCR–pMHC structure prediction: a unified evaluation and CDR3-based functional insights. *Brief Bioinform* 2026;27(3):bbag289. doi:10.1093/bib/bbag289
+11. Ascunce-París A, Romero-Durana M, Valencia A, Farriol-Duran R, Guallar V. Structural quality-tier assessment for TCR-pMHC functional enrichment. *Front Immunol* 2026;17:1869810. doi:10.3389/fimmu.2026.1869810
+12. Shi Y, Parks JM, Smith JC. Comparative analysis of TCR and TCR-pMHC complex structure prediction tools. *J Chem Inf Model* 2025;65(13):7156–7173. doi:10.1021/acs.jcim.5c00298
+13. Yin R, Saravanakumar S, Shi SY, et al. Benchmarking AlphaFold and related deep learning approaches for modeling antibody and TCR antigen recognition. *bioRxiv* 2026:2026.07.04.736425. doi:10.64898/2026.07.04.736425
+14. Basu S, Wallner B. DockQ: a quality measure for protein-protein docking models. *PLoS One* 2016;11(8):e0161879. doi:10.1371/journal.pone.0161879
+15. Mirabello C, Wallner B. DockQ v2: improved automatic quality measure for protein multimers, nucleic acids, and small molecules. *Bioinformatics* 2024;40(10):btae586. doi:10.1093/bioinformatics/btae586
+16. Lensink MF, Brysbaert G, Raouraoua N, et al. Impact of AlphaFold on structure prediction of protein complexes: the CASP15-CAPRI experiment. *Proteins* 2023;91(12):1658–1683. doi:10.1002/prot.26609
+17. Dunbar J, Deane CM. ANARCI: antigen receptor numbering and receptor classification. *Bioinformatics* 2016;32(2):298–300. doi:10.1093/bioinformatics/btv552
+18. Lefranc MP, Pommié C, Ruiz M, et al. IMGT unique numbering for immunoglobulin and T cell receptor variable domains and Ig superfamily V-like domains. *Dev Comp Immunol* 2003;27(1):55–77. doi:10.1016/s0145-305x(02)00039-3
+19. Woods LJ, Neff B, Lahouel K, et al. General prediction of T cell receptor antigen specificity from sequence using AlphaFold 3. *bioRxiv* 2026:2026.06.02.729478. doi:10.64898/2026.06.02.729478
+20. Bryant P, Pozzati G, Elofsson A. Improved prediction of protein-protein interactions using AlphaFold2. *Nat Commun* 2022;13(1):1265. doi:10.1038/s41467-022-28865-w
+21. ESMFold2 model release, `biohub/ESMFold2` (revision `8fc3ff47`) with `biohub/ESMC-6B` (revision `45b0fa5d`), accessed via the ESM SDK, model `esmfold2-fast-2026-05`.
+22. Protenix: an open reproduction of the AlphaFold 3 architecture (ByteDance AML AI4Science), run through the public Protenix server.

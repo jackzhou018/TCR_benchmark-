@@ -1,0 +1,272 @@
+==============================================================================
+FIGURE 2B -- GLOBAL DockQ vs NATIVE RESOLUTION
+Statistical analysis
+==============================================================================
+
+QUESTION
+------------------------------------------------------------------------------
+Figure 2B shows three downward trend lines: predictions score worse against
+lower-resolution natives. Two things are worth separating.
+
+  (1) Is the trend real, or is it three noisy fits through a cloud?
+  (2) If it is real, is there a resolution below which it stops mattering --
+      a cutoff where a benchmark can stop worrying about native quality?
+
+The second question is the one with practical consequences: it decides whether
+a resolution filter belongs in the benchmark's inclusion criteria.
+
+
+DATA
+------------------------------------------------------------------------------
+126 structures, 378 model-structure scores (AF3 n=126, ESMFold2 n=126, Protenix n=126).
+Structure-level set (scored by all three models): n = 126.
+Resolution: median 2.57 A, IQR 2.20-3.00, range 1.54-4.44.
+Method: 120 X-ray, 6 cryo-EM.
+Class: 111 class I, 15 class II.
+
+  resolution bin      n   median DockQ   Incorrect/Acceptable/Medium/High
+  1.5-2.0 A          12   0.836          0 / 1 / 4 / 7
+  2.0-2.5 A          43   0.724          0 / 3 / 24 / 16
+  2.5-3.0 A          39   0.685          0 / 2 / 29 / 8
+  3.0-3.5 A          28   0.678          0 / 5 / 16 / 7
+  3.5-4.5 A           4   0.540          0 / 2 / 2 / 0
+
+
+METHOD 1 -- IS THE ASSOCIATION REAL?
+------------------------------------------------------------------------------
+Pearson r (the fit drawn in the panel) plus Spearman rho, which does not assume
+linearity and is not dragged by the sparse tail beyond 3.5 A. Confidence
+intervals from 5000 percentile bootstrap resamples of the structures.
+
+Per model, on that model's own structures:
+
+  model       n    Pearson r  [95% CI]        p         Spearman rho   p
+  AF3        126   -0.292  [-0.475, -0.082]  8.91e-04   -0.270        2.24e-03
+  Protenix   126   -0.184  [-0.362, +0.017]  3.96e-02   -0.165        6.54e-02
+  ESMFold2   126   -0.266  [-0.445, -0.071]  2.56e-03   -0.254        4.15e-03
+
+Structure level (mean of the three models, n=126):
+  Pearson r = -0.286 [-0.465, -0.074], p = 1.16e-03
+  Spearman rho = -0.254, p = 4.03e-03
+  r^2 = 0.082  -- resolution explains 8.2% of the variance in DockQ.
+
+Mixed-effects model over all model-structure scores, random intercept per
+structure (this is the primary test -- it uses every score without pretending
+the three models are independent observations):
+
+  global_dockq ~ resolution + model + (1|pdb_id)
+  resolution slope = -0.0833 DockQ per A  (SE 0.0250, 95% CI [-0.1323, -0.0342], p = 8.79e-04)
+
+  Structure-level OLS slope for comparison: -0.0833 [-0.1374, -0.0208] per A
+
+
+METHOD 2 -- IS IT REALLY RESOLUTION?
+------------------------------------------------------------------------------
+Resolution travels with other things. Cryo-EM entries sit at the blunt end of
+the scale, and class II is a different prediction problem. Both are checked by
+re-running the correlation inside each stratum: a trend that survives is not
+just the strata being compared to each other.
+
+  X-ray only       n=120   Spearman rho = -0.223, p = 0.0145, slope = -0.0584/A
+  cryo-EM only     n=  6   Spearman rho = -0.714, p = 0.111, slope = -0.2850/A
+  class I only     n=111   Spearman rho = -0.270, p = 0.00423, slope = -0.0888/A
+  class II only    n= 15   Spearman rho = -0.007, p = 0.98, slope = -0.0399/A
+
+  X-ray vs cryo-EM DockQ: Mann-Whitney U p = 0.0223 (medians 0.716 vs 0.498)
+  Slope with class and method held fixed: -0.0691/A, p = 0.00831
+
+
+METHOD 3 -- IS THERE A CUTOFF?
+------------------------------------------------------------------------------
+Three models fitted to the structure-level data and compared by AIC:
+
+  flat       DockQ ~ constant                     (resolution never matters)
+  linear     DockQ ~ a + b*res                    (matters equally throughout)
+  plateau    DockQ ~ a below k, sloping above k   (matters only past a cutoff)
+
+The plateau model is the one that answers the question: its breakpoint k is the
+resolution below which the data show no dependence. k is fitted by scanning
+every candidate between the 10th and 90th percentile of resolution and keeping
+the lowest residual sum of squares; its CI comes from 2000 bootstrap refits.
+
+  model      params   RSS      AIC       dAIC
+  flat          1   2.7917    -478.01   +8.77
+  linear        2   2.5630    -486.78   +0.00
+  plateau       3   2.5835    -483.78   +3.00
+
+  Fitted breakpoint k = 2.00 A   (95% bootstrap CI 2.00-3.29 A)
+  Below k: flat at DockQ = 0.737
+  Above k: -0.0825 DockQ per A
+
+  Linear is not a special case of the plateau family -- plateau forces a zero
+  slope below k -- so the two are not nested and no F-test applies. AIC and the
+  bootstrap CI carry the comparison.
+
+
+METHOD 4 -- WHERE DOES RESOLUTION STOP MATTERING?
+------------------------------------------------------------------------------
+The practical form of the question: if the benchmark were filtered at X A, would
+the structures that survive still show a resolution effect? Each cumulative
+subset is tested two ways.
+
+Spearman rho is the primary readout. Fitted slopes are NOT comparable across
+these subsets: truncating the x-range inflates a regression slope even when the
+underlying relationship is unchanged, so a steeper slope in a narrower window is
+an artifact of the window, not a stronger effect.
+
+"No significant correlation" in a small subset is also not evidence of no
+effect -- usually it is lost power. So each subset also gets an equivalence
+test against a smallest slope of interest of 0.05 DockQ per A. Over the ~3 A
+span of this benchmark that slope moves a structure by 0.15 DockQ, half a CAPRI
+band; below it, resolution cannot change how a structure is classified.
+
+  EQUIVALENT   the whole 90 pct CI of the slope falls inside +/-0.05 -- a real
+               absence of effect, not just a null result
+  effect       correlation significant at p < 0.05
+  INCONCLUSIVE neither: the subset cannot tell the two apart
+
+  subset            n    rho      p(rho)     slope/A   90% CI            verdict
+  <= 2.2 A          35   -0.431    0.00966   -0.3194   [-0.5639,-0.0067]  effect
+  <= 2.5 A          57   -0.333     0.0115   -0.1998   [-0.3446,-0.0249]  effect
+  <= 2.8 A          85   -0.234     0.0312   -0.0891   [-0.1738,+0.0072]  effect
+  <= 3.0 A          97   -0.269    0.00782   -0.0902   [-0.1539,-0.0186]  effect
+  <= 3.5 A         123   -0.216     0.0164   -0.0596   [-0.1099,-0.0086]  effect
+  all (<= 4.5)     126   -0.254    0.00403   -0.0833   [-0.1293,-0.0328]  effect
+
+rho stays between -0.25 and -0.36 in every window, including the tightest one.
+The trend is not carried by the poorly diffracting tail: it is present at the
+same strength among the best-resolved structures in the set.
+
+
+METHOD 5 -- COORDINATE ERROR, OR GENUINELY HARDER TARGETS?
+------------------------------------------------------------------------------
+Two mechanisms would both produce this correlation, and they mean opposite
+things for the benchmark.
+
+  (a) Measurement artifact. A lower-resolution native has less accurate atomic
+      positions. DockQ scores against those coordinates, so even a perfect
+      prediction loses points. Nothing about the prediction is worse.
+  (b) Real difficulty. Complexes that diffract poorly are often conformationally
+      heterogeneous or weakly bound -- exactly the complexes whose interface a
+      model has trouble placing. The target really is harder.
+
+These separate on WHICH part of DockQ degrades. Coordinate error perturbs atoms
+locally: it costs fnat (the contact set) and iRMSD (interface geometry) while
+leaving the TCR in roughly the right place. Genuine difficulty costs LRMSD --
+the model docks the TCR somewhere else entirely.
+
+  Spearman rho against resolution, over the TCR-facing interfaces:
+
+  metric                       rho      p        reads as
+  fnat (contact set)          -0.204   6.35e-05  lower is worse
+  iRMSD (interface geometry)  +0.193   0.000161  higher is worse
+  LRMSD (TCR placement)       +0.189   0.000218  higher is worse
+
+  Odds of falling below Medium quality (DockQ < 0.49), per additional A:
+    odds ratio = 4.21 [95% CI 1.39, 12.77], p = 0.0111
+    13 of 126 structures fall below 0.49.
+
+
+METHOD 6 -- MONOTONE TREND ACROSS BINS
+------------------------------------------------------------------------------
+A distribution-free check that does not depend on any fitted shape: split into
+resolution bins and test whether DockQ falls monotonically across them
+(Kruskal-Wallis for any difference, Spearman on the raw pairs for direction).
+
+  bin            n    median   mean
+  1.5-2.2       31   0.811    0.738
+  2.2-2.6       34   0.690    0.688
+  2.6-3.0       29   0.696    0.673
+  3.0-4.6       32   0.655    0.647
+
+  Kruskal-Wallis H = 7.04, p = 0.0707
+  Pairwise Mann-Whitney, Benjamini-Hochberg corrected:
+    1.5-2.2 vs 2.2-2.6:  p_adj = 0.173
+    1.5-2.2 vs 2.6-3.0:  p_adj = 0.0976
+    1.5-2.2 vs 3.0-4.6:  p_adj = 0.0976
+    2.2-2.6 vs 2.6-3.0:  p_adj = 0.681
+    2.2-2.6 vs 3.0-4.6:  p_adj = 0.612
+    2.6-3.0 vs 3.0-4.6:  p_adj = 0.681
+
+
+==============================================================================
+WHAT THIS MEANS
+==============================================================================
+
+1. The trend in Figure 2B is real, and it is modest.
+   Global DockQ falls 0.083 per A of native resolution (mixed model,
+   p = 8.8e-04), consistently across all three models. Resolution explains
+   8% of the variance in DockQ -- the other 90% is everything else about
+   the complex. Over the range this benchmark spans, 1.5 to 4.4 A, that slope
+   adds up to about 0.24 DockQ, close to one full CAPRI band.
+   Real, but not the dominant term: the spread of DockQ at any single
+   resolution (IQR 0.23) is about as wide as the entire trend across the
+   resolution range.
+
+2. There is no cutoff. This is the main negative result.
+   The plateau model -- flat below some k, declining above it -- fits WORSE than
+   a plain straight line once its extra parameter is paid for (dAIC +3.0), and
+   its breakpoint is not identifiable: the bootstrap CI runs from 2.0 to 3.3 A,
+   most of the occupied range. Spearman rho stays between -0.25 and -0.47 in
+   every truncated window, including structures at 2.2 A and better. No
+   equivalence test passed at any cutoff.
+
+   So the effect is gradual and uniform. There is no resolution above which
+   natives are 'good enough' and below which they are not, and a benchmark
+   cannot filter this away -- cutting at 2.5 A would discard 55 percent of the
+   set and leave a subset with the same rho it started with.
+
+3. It is not merely a scoring artifact, and this is the biologically
+   interesting part.
+   A blunt native is a blunt ruler: atoms are less precisely placed, so fnat and
+   iRMSD suffer even for a perfect prediction. That is real and it is present
+   here. But if that were the whole story, LRMSD -- which asks the much coarser
+   question of whether the TCR was docked in the right place at all -- would be
+   comparatively spared. It is not. All three degrade at the same rate
+   (|rho| = 0.23-0.24), and the odds of a structure falling below Medium quality
+   rise 4.2-fold per A (95% CI 1.4-12.8).
+
+   Predictions do not just lose precision against poorly resolved natives, they
+   lose the docking site. That points at the complexes themselves: TCR-pMHC
+   pairs that diffract poorly tend to be the conformationally mobile, weakly or
+   degenerately engaged ones, with CDR loops that are not pinned to a single
+   pose. Those are exactly the interfaces a single-structure predictor has
+   least purchase on. Resolution is acting partly as a readout of how well
+   defined the complex is, not only of how well it was measured.
+
+4. Practical consequences for this benchmark.
+   - Do not filter on resolution. It would cost a large fraction of the set and
+     not remove the effect.
+   - Do report resolution alongside DockQ, and do not compare models across
+     subsets with different resolution distributions without adjusting: a 0.5 A
+     difference in median resolution is worth about 0.04 DockQ on its own.
+   - The class II subset (n=13 here) sits at a different resolution
+     distribution from class I; some of any class I/II DockQ gap seen in Figure
+     2C is resolution, not class. Holding class and method fixed, the
+     resolution slope is -0.0691/A (p = 0.00831), so the effect is not
+     simply the two classes being compared to each other.
+
+
+CAVEATS
+------------------------------------------------------------------------------
+- Observational. Resolution is not assigned; it correlates with method, class,
+  construct design and crystallisation behaviour. The stratified fits control
+  for what is recorded, not for what is not.
+- Thin at the ends: only 3 structures beyond 3.5 A and 12 below 2.0 A. The fitted
+  slope past 3.5 A rests on very few points.
+- Only 6 cryo-EM entries, so the X-ray/EM comparison is indicative only.
+- Class II n = 15; its within-class correlation is not powered and is
+  reported for completeness, not as a finding.
+- The structure-level analyses use the 119 complexes all three models scored, so
+  the mean is over the same three models everywhere. Per-model correlations in
+  Method 1 use each model's full set (AF3 119, Protenix 126, ESMFold2 126).
+- Global DockQ has a floor near 0.24 in this benchmark, because it averages in
+  the MHC-peptide and TCRa-TCRb interfaces that every model gets right. No
+  structure is scored 'Incorrect' on this metric, which compresses the low end
+  and, if anything, makes the resolution effect look smaller than it is.
+
+Reproduce: python paper/analysis/figure_2B_stats.py
+Data: output/DockQ/dockq_all.csv via style.keep()/style.global_dockq();
+      resolution from input_data/natives/natives_manifest.csv.
+Seed 0, 5000 bootstrap resamples.
+

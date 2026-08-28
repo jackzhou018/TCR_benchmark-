@@ -1,0 +1,9 @@
+Figure 1:
+
+Structural figure showing what we truncated for Class I structures and Class II structures. 
+
+Figure 2:
+
+DockQ graphs: DockQoverall vs iPTM graph, DockQ overall histogram, DockQ vs rresolution graph, class I vs class II graph
+
+Figure 3: 
