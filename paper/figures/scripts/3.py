@@ -66,5 +66,5 @@ c.text(.5, .78, f"union: {counts[0]+counts[1]+counts[2]}/126", transform=c.trans
        ha="center", fontsize=9)
 
 fig.tight_layout()
-fig.savefig(f"{OUT}/Figure_3.png", dpi=300)
-print("wrote", f"{OUT}/Figure_3.png", counts, rho)
+fig.savefig(f"{OUT}/Figure_divergence.png", dpi=300)
+print("wrote", f"{OUT}/Figure_divergence.png", counts, rho)

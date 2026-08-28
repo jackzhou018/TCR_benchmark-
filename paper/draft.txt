@@ -149,8 +149,8 @@ prefers a filtered view can read it off directly.
 
 ## 2.2 Domain truncation and chain convention
 
-Each complex was truncated to the domains that constitute the TCR–pMHC interface.
-For class I, β2-microglobulin was removed and the MHC heavy chain was cut to its
+Each complex was truncated to the domains that constitute the TCR–pMHC interface
+(Figure 1). For class I, β2-microglobulin was removed and the MHC heavy chain was cut to its
 α1α2 peptide-binding platform (median 181 residues, range 161–181); for class II,
 the α1 and β1 domains were retained (81–85 and 89–93 residues). TCR chains were
 cut to their variable domains (α 101–114 residues, β 105–116). Prediction inputs
@@ -173,6 +173,14 @@ pipeline. β2-microglobulin is excluded.
 | MHC-II β1                     | —       | C        |
 | TCR α variable                | C       | D        |
 | TCR β variable                | D       | E        |
+
+![**Domain truncation applied to the benchmark complexes.** (**A**) Class I. The TCR
+constant domains, the MHC α3 domain and β2-microglobulin are removed, leaving the MHC-I
+α1α2 peptide-binding platform, the peptide and the paired TCR variable domains.
+(**B**) Class II. The TCR constant domains and the MHC-II α2 and β2 domains are removed,
+leaving the α1 and β1 peptide-binding domains, the peptide and the paired TCR variable
+domains. Retained chains are coloured by role; removed regions are
+grey.](paper/figures/outputs/Figure_truncation.png){width=85%}
 
 Class I predictions therefore carry chains A,B,C,D and class II A,B,C,D,E. Because
 downstream interface scoring assumes chain letters mean the same thing in every
@@ -395,7 +403,7 @@ peptide sequences of 8–15 residues (median 9).
 ## 3.2 Overall interface accuracy
 
 Every method produced at least an acceptable model of every complex: Global DockQ
-never fell below 0.23 for any method on any of the 126 complexes (Figure 1A).
+never fell below 0.23 for any method on any of the 126 complexes (Figure 2A).
 Median Global DockQ was 0.751 for AlphaFold 3 (IQR 0.571–0.826), 0.736 for
 ESMFold2 (0.592–0.840), 0.708 for TCRmodel2 on its 111 class I targets
 (0.590–0.808) and 0.701 for Protenix (0.530–0.799).
@@ -406,7 +414,7 @@ difference of −0.002 (Wilcoxon p = 0.68). Both, however, separate from Proteni
 AlphaFold 3 +0.039 (p = 0.045) and ESMFold2 +0.055 (p = 0.0009). TCRmodel2 was
 not separable from any of the three on its class I subset (all p > 0.23).
 
-The CAPRI-class view (Figure 1B) tells the same story with a different emphasis.
+The CAPRI-class view (Figure 2B) tells the same story with a different emphasis.
 No method produced an incorrect model. ESMFold2 placed the largest fraction in
 the medium-or-better band (91.3%: 54.0% medium, 37.3% high), followed by
 TCRmodel2 (88.3%), AlphaFold 3 (84.9%: 50.0% medium, 34.9% high) and Protenix
@@ -421,7 +429,7 @@ TCR–pMHC complexes.
 (**A**) Distribution of Global DockQ per method; box, IQR and median; dots, individual
 complexes; dashed lines, CAPRI thresholds. TCRmodel2 covers the 111 class I complexes only.
 (**B**) The same data as CAPRI classes. No method produced an incorrect model of any
-complex.](paper/figures/outputs/Figure_1.png){width=100%}
+complex.](paper/figures/outputs/Figure_accuracy.png){width=100%}
 
 ## 3.3 Accuracy by interface
 
@@ -522,7 +530,7 @@ is restricted to TCR and MHC structures.
 
 ## 3.5 Effect of MHC class
 
-Class II is not harder than class I on this benchmark (Figure 2C). Median Global
+Class II is not harder than class I on this benchmark (Figure 3C). Median Global
 DockQ for class II versus class I is 0.752 versus 0.750 (AlphaFold 3), 0.742
 versus 0.736 (ESMFold2) and 0.713 versus 0.698 (Protenix); every difference is
 well inside the spread, and the class II subset is small (n = 15). ESMFold2's
@@ -534,7 +542,7 @@ construction.
 ## 3.6 Effect of reference resolution
 
 Accuracy declines with worsening reference resolution for every method, but not
-equally (Figure 2B). Pearson r between resolution and Global DockQ is −0.292 for
+equally (Figure 3B). Pearson r between resolution and Global DockQ is −0.292 for
 AlphaFold 3 (p = 0.001), −0.266 for ESMFold2 (p = 0.003), −0.238 for TCRmodel2
 (p = 0.012) and −0.184 for Protenix (p = 0.040, Spearman p = 0.065, not
 significant). Part of this is unavoidable — a lower-resolution reference is a
@@ -546,7 +554,7 @@ of the references themselves.
 ## 3.7 Confidence calibration and reference-free quality scores
 
 Interface confidence predicts accuracy for all three general methods, but
-ESMFold2's ipTM does so substantially better (Figure 2A). Pearson r between ipTM
+ESMFold2's ipTM does so substantially better (Figure 3A). Pearson r between ipTM
 and Global DockQ is 0.793 for ESMFold2 (Spearman ρ = 0.777), against 0.660 for
 AlphaFold 3 (ρ = 0.654) and 0.657 for Protenix (ρ = 0.679). The regression lines
 also differ in intercept: ESMFold2 reaches a given DockQ at a systematically
@@ -574,7 +582,7 @@ requires no learned quality model at all (Section 3.9).
 ipTM, with per-method linear fits and Pearson *r*. ESMFold2's confidence is both more
 conservative — it reaches a given DockQ at a lower ipTM — and better ordered. (**B**) Global
 DockQ against the resolution of the experimental reference. (**C**) Global DockQ by MHC
-class. Shaded bands are the CAPRI quality classes.](paper/figures/outputs/Figure_2.png){width=100%}
+class. Shaded bands are the CAPRI quality classes.](paper/figures/outputs/Figure_determinants.png){width=100%}
 
 ## 3.8 Effect of similarity to pre-cutoff structures
 
@@ -627,7 +635,7 @@ same pMHC and the same TCR fold. The disagreement is a docking disagreement, not
 a folding one.
 
 That disagreement is a strong, entirely reference-free predictor of accuracy
-(Figure 3A). Cross-model Cα RMSD correlates with AlphaFold 3's Global DockQ at
+(Figure 4A). Cross-model Cα RMSD correlates with AlphaFold 3's Global DockQ at
 Spearman ρ = −0.756 and with ESMFold2's at ρ = −0.670, and with the *worse* of
 the two at ρ = −0.884 (p = 1.1 × 10⁻⁴²). For comparison, on the same 126
 complexes AlphaFold 3's own ipTM predicts that worse-of-two value at ρ = +0.604
@@ -636,14 +644,14 @@ native-free quality signal than either model's internal confidence, than pDockQ,
 and than the composite and random-forest scores of Section 3.7 — and it requires
 no confidence head, no training, and no calibration.
 
-By divergence quartile (Figure 3B), median Global DockQ falls from 0.860
+By divergence quartile (Figure 4B), median Global DockQ falls from 0.860
 (AlphaFold 3) and 0.862 (ESMFold2) in the most-agreeing quartile to 0.518 and
 0.564 in the most-divergent one. Notably, the two models mostly fail on the
 *same* complexes: both quartile trends are parallel, and among the 20 most
 divergent complexes, 4 are failed by both at the medium threshold while 12 are
 solved by exactly one.
 
-The residual complementarity is nonetheless substantial (Figure 3C). At
+The residual complementarity is nonetheless substantial (Figure 4C). At
 DockQ ≥ 0.49,
 AlphaFold 3 succeeds on 107 of 126 complexes and ESMFold2 on 115; the two
 together succeed on 119 (103 both, 4 AlphaFold 3 only, 12 ESMFold2 only, 7
@@ -666,12 +674,12 @@ failure, and the disagreement does.
 (**A**) Cα RMSD between the AlphaFold 3 and ESMFold2 predictions of the same sequence
 against the worse of their two Global DockQ scores. (**B**) Global DockQ by quartile of
 that divergence; the two methods degrade together. (**C**) Complexes reaching
-medium-or-better accuracy: individually, jointly, and neither.](paper/figures/outputs/Figure_3.png){width=100%}
+medium-or-better accuracy: individually, jointly, and neither.](paper/figures/outputs/Figure_divergence.png){width=100%}
 
 ## 3.10 Denoising trajectories of the two samplers
 
 Instrumenting both diffusion samplers on the same complexes shows that the
-equality of outcome conceals very different dynamics (Figure 4A). AlphaFold 3
+equality of outcome conceals very different dynamics (Figure 5A). AlphaFold 3
 begins denoising from an initial noise scale of ~2,560 Å and is still ~44 Å from
 the native at the midpoint of its 200-step schedule; ESMFold2 begins at ~256 Å
 and is already within ~5.7 Å at its own midpoint. Measured as the fraction of the
@@ -680,7 +688,7 @@ frame, AlphaFold 3 converges at 73% of its steps and ESMFold2 at 58%. AlphaFold 
 spends most of its schedule in a regime where, at the scale the noise schedule
 sets, no structure has settled at all; ESMFold2 commits early and refines.
 
-The same behaviour at scale (Figure 4B, 30 complexes × 5 samples = 30,000
+The same behaviour at scale (Figure 5B, 30 complexes × 5 samples = 30,000
 recorded frames) puts AlphaFold 3's convergence in a narrow window. Mean Cα RMSD
 to the final frame of the same sample falls below 2.0 Å at step 150 and below
 1.0 Å at step 158; every complex is within 1.0 Å by step 159; accuracy against
@@ -694,7 +702,7 @@ way through.
 
 If the trajectory has effectively converged by step ~160, the last 40 steps and
 the four extra diffusion samples should be nearly free to remove. They are
-(Figure 4C, Table 4). Over the same 30 complexes, same MSAs, same seeds, run
+(Figure 5C, Table 4). Over the same 30 complexes, same MSAs, same seeds, run
 serially on one idle GPU:
 
 Table: **AlphaFold 3 sampler economy on 30 complexes.** Same complexes, same MSAs
@@ -732,7 +740,7 @@ complexes traced in both models; AlphaFold 3 (200 steps, initial σ ≈ 2,560 Å
 of ångströms out at its midpoint, ESMFold2 (68 recorded steps, initial σ ≈ 256 Å) is within
 a few ångströms. (**B**) AlphaFold 3 convergence to its own final frame over 30 complexes ×
 5 samples; band spans median to 90th percentile. (**C**) GPU time against mean Global DockQ
-for four sampler configurations on the same 30 complexes.](paper/figures/outputs/Figure_4.png){width=100%}
+for four sampler configurations on the same 30 complexes.](paper/figures/outputs/Figure_sampler.png){width=100%}
 
 # 4 Discussion
 

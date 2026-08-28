@@ -71,5 +71,5 @@ c.text(7.9, .684, "1.80× faster,  ΔDockQ −0.010 (p = 0.33)",
        ha="center", fontsize=8.5, color="#b5545c")
 
 fig.tight_layout()
-fig.savefig(f"{OUT}/Figure_4.png", dpi=300)
-print("wrote", f"{OUT}/Figure_4.png")
+fig.savefig(f"{OUT}/Figure_sampler.png", dpi=300)
+print("wrote", f"{OUT}/Figure_sampler.png")
