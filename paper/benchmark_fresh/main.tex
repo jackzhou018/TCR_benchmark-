@@ -235,47 +235,23 @@ framework dominates a \textasciitilde110-residue V domain --- and
 filtering on it discards most of the set while retaining an
 idiosyncratic remainder (Section 3.8). Instead, similarity to the
 pre-cutoff structural record is measured explicitly and treated as a
-covariate, and the full threshold sweep is reported so that any reader
-who prefers a filtered view can read it off directly.
+covariate.
 
 \subsection{2.2 Domain truncation and chain
 convention}\label{domain-truncation-and-chain-convention}
 
-Each complex was truncated to the domains that constitute the TCR--pMHC
-interface (Figure 1). For class I, \ensuremath{\beta}2-microglobulin was removed and the
+Each complex was truncated to the domains that constitute the variable
+regions of the TCR--pMHC interface (Figure 1). For class I, \ensuremath{\beta}2-microglobulin was removed and the
 MHC heavy chain was cut to its \ensuremath{\alpha}1\ensuremath{\alpha}2 peptide-binding platform (median 181
 residues, range 161--181); for class II, the \ensuremath{\alpha}1 and \ensuremath{\beta}1 domains were
 retained (81--85 and 89--93 residues). TCR chains were cut to their
 variable domains (\ensuremath{\alpha} 101--114 residues, \ensuremath{\beta} 105--116). Prediction inputs
-used the complete deposited polymer sequences over those spans,
-including residues annotated as experimentally unobserved; accuracy
-calculations were restricted to residues with deposited atomic
-coordinates, and no missing coordinates were imputed.
+used the complete deposited polymer sequences over those spans.
 
-A single chain convention was used for every method, with no per-model
-remapping (Table 1).
-
-\begin{longtable}[]{@{}lcc@{}}
-\caption{\textbf{Benchmark chain convention.} Chain letters are used
-verbatim in every method's input and output; no per-model remapping is
-performed anywhere in the pipeline. \ensuremath{\beta}2-microglobulin is
-excluded.}\tabularnewline
-\toprule\noalign{}
-Role & Class I & Class II \\
-\midrule\noalign{}
-\endfirsthead
-\toprule\noalign{}
-Role & Class I & Class II \\
-\midrule\noalign{}
-\endhead
-\bottomrule\noalign{}
-\endlastfoot
-MHC-I \ensuremath{\alpha}1\ensuremath{\alpha}2 / MHC-II \ensuremath{\alpha}1 & A & A \\
-Peptide & B & B \\
-MHC-II \ensuremath{\beta}1 & --- & C \\
-TCR \ensuremath{\alpha} variable & C & D \\
-TCR \ensuremath{\beta} variable & D & E \\
-\end{longtable}
+Every method received the same chain letters, with no per-model
+remapping anywhere in the pipeline: for class I, MHC \ensuremath{\alpha}1\ensuremath{\alpha}2 (A), peptide
+(B), TCR\ensuremath{\alpha} (C) and TCR\ensuremath{\beta} (D); for class II, MHC-II\ensuremath{\alpha} (A), peptide (B),
+MHC-II\ensuremath{\beta} (C), TCR\ensuremath{\alpha} (D) and TCR\ensuremath{\beta} (E).
 
 \begin{figure}
 \centering
@@ -289,12 +265,6 @@ removed, leaving the \ensuremath{\alpha}1 and \ensuremath{\beta}1 peptide-bindin
 the paired TCR variable domains. Retained chains are coloured by role;
 removed regions are grey.}
 \end{figure}
-
-Class I predictions therefore carry chains A,B,C,D and class II
-A,B,C,D,E. Because downstream interface scoring assumes chain letters
-mean the same thing in every model's output, an automated check
-confirmed that the residues present in every prediction CIF matched the
-input FASTAs for all methods before scoring.
 
 \subsection{2.3 Reference structures}\label{reference-structures}
 
@@ -584,7 +554,7 @@ incorrect model of any complex.}
 
 Global DockQ is weighted across all interfaces of the complex, several
 of which are modelled accurately by every method. Decomposing it by
-interface (Table 2) localises the differences between methods. The
+interface (Table 1) localises the differences between methods. The
 MHC--peptide interface is effectively solved by every method: median
 DockQ 0.940 (AlphaFold 3), 0.939 (ESMFold2), 0.933 (Protenix) and 0.931
 (TCRmodel2), with the class II MHC\ensuremath{\alpha}--peptide and peptide--MHC\ensuremath{\beta}
@@ -673,7 +643,7 @@ by the best-performing methods.
 \subsection{3.4 TCR-specific accuracy: docking versus CDR3 loop
 conformation}\label{tcr-specific-accuracy-docking-versus-cdr3-loop-conformation}
 
-The two TCR-specific metrics decompose that residual error (Table 3).
+The two TCR-specific metrics decompose that residual error (Table 2).
 
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.3793}}
@@ -751,7 +721,7 @@ in where they put it. This is consistent with Shi et al.'s observation
 that CDR3 loops and docking orientation are separate, and separately
 unsolved, problems {[}12{]}.
 
-Two secondary observations follow from Table 3. First, ESMFold2's
+Two secondary observations follow from Table 2. First, ESMFold2's
 advantage is concentrated in the CDR3\ensuremath{\beta} loop and in class II: its class
 II medians are 1.76 \AA{} (all-CDR), 1.82 \AA{} (CDR3\ensuremath{\alpha}) and 1.34 \AA{} (CDR3\ensuremath{\beta}),
 against AlphaFold 3's 2.37, 2.37 and 2.05 \AA{}. Second, TCRmodel2's class I
@@ -969,7 +939,7 @@ runtime}\label{effect-of-alphafold-3-sampler-settings-on-accuracy-and-runtime}
 
 If the trajectory has effectively converged by step \textasciitilde160,
 the last 40 steps and the four extra diffusion samples should be nearly
-free to remove. They are (Figure 5C, Table 4). Over the same 30
+free to remove. They are (Figure 5C, Table 3). Over the same 30
 complexes, same MSAs, same seeds, run serially on one idle GPU:
 
 \begin{longtable}[]{@{}
