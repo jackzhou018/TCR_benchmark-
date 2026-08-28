@@ -206,38 +206,27 @@ AlphaFold 3 sampler settings.
 \subsection{2.1 Benchmark set
 construction}\label{benchmark-set-construction}
 
-Candidate entries were drawn from the TCR3d database {[}1,3{]}, which
-curates all known TCR complex structures and is the source used by the
-most closely related benchmark {[}10{]}. Restricting to \ensuremath{\alpha}\ensuremath{\beta} TCR complexes
+We constructed a dataset of TCR-pMHC Class I and Class II complexes from the TCR3d database {[}1,3{]}, which
+curates all known TCR complex structures. Restricting to \ensuremath{\alpha}\ensuremath{\beta} TCR complexes
 with an initial RCSB release date after 30 September 2021 gave 427 class
 I and 72 class II candidates. Of these, 136 were complete
 TCR--peptide--MHC complexes containing all of an MHC peptide-binding
 platform, a peptide, and paired TCR \ensuremath{\alpha} and \ensuremath{\beta} variable domains (114 class
 I, 22 class II); the remainder were unliganded TCRs, pMHC-only entries,
-TCR-mimic antibody complexes, or otherwise incomplete triads and were
-not carried forward.
+TCR-mimic antibody complexes, or otherwise incomplete triads.
 
-All 136 entries were manually reviewed against their deposited
-coordinates and primary publications, and nine were flagged for review
-and excluded from scoring for one of two reasons. Five entries carry
-non-standard peptide chemistry: 8TRL, 8TRQ and 8TRR each contain one
-citrulline and 9NIG contains two, while 9WNT is a lipopeptide whose
-attached lipid cannot be represented in a polymer sequence. Because
-standard FASTA cannot encode these modified residues, and because the
-modification is in every case a determinant of the interaction being
-modelled, sequence-input prediction of these complexes is not well
-posed. The remaining four entries are covalently tethered constructs in
-which the peptide is fused to an MHC-containing construct through an
-engineered linker: 8VQ8 and 9AUD carry a peptide--linker--MHC-II\ensuremath{\beta} fusion
-(QVYSLIRPNENPAHK--GSGGSIEGRGGSGASGDS--MHC-II\ensuremath{\beta} in 8VQ8), 8VD0 carries a
-comparable peptide linker, and 9C3E is a 593-residue single-chain
-construct containing peptide, linkers, \ensuremath{\beta}2-microglobulin and MHC-I.
-Removing the linker and modelling the components as separate chains
-would alter the experimental connectivity and confound the accuracy
-comparison.
-
-One further entry, 9J4S, was excluded at the reference-structure stage
-(Section 2.3), leaving 126 scoreable complexes, 111 class I and 15 class
+All 136 entries were reviewed against their deposited coordinates and
+primary publications, and ten were excluded from scoring. Five (8TRL,
+8TRQ, 8TRR, 9NIG, 9WNT) contain modified peptide residues that a
+standard FASTA sequence cannot represent, and because the modification
+is in every case part of the interaction being modelled, predicting
+these complexes from sequence alone is not well posed. Four (8VD0, 8VQ8,
+9AUD, 9C3E) are engineered constructs in which the peptide is covalently
+fused to the MHC through a linker; modelling their components as
+separate chains would alter the connectivity of the experiment. The
+last, 9J4S, has no physical TCR--pMHC interface in any author-defined
+assembly of the deposited structure and so cannot be scored at all
+(Section 2.3). This leaves 126 scoreable complexes, 111 class I and 15 class
 II.
 
 No redundancy filter or resolution cut was applied to the primary set.
@@ -339,8 +328,8 @@ contact-count test alone cannot distinguish a crystal lattice contact
 between two copies from a real interface. It identified 9J4S, for which
 neither author-defined assembly contains any contact between the TCR
 variable domains and the pMHC; the apparent interface obtained by mixing
-chains from different assemblies is a lattice contact. 9J4S was
-excluded, and a DockQ score is never computed for it.
+chains from different assemblies is a lattice contact. It is excluded
+(Section 2.1) and a DockQ score is never computed for it.
 
 Four natives (9EJG, 9EJH, 9EJI, 9LLU) have a TCR that is docked on the
 MHC but not touching the peptide. This is biology --- 9EJI is a
