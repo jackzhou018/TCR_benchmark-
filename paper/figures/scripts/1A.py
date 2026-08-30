@@ -78,9 +78,7 @@ def strip_box(ax, data, order, ylabel, title):
 # ======================= Figure 1A : interface accuracy =================
 data, order = load()
 fig, ax = plt.subplots(figsize=(COLW * len(order), 7.0))
-n = data.Method.value_counts().max() if len(data) else 0
-strip_box(ax, data, order, "Global DockQ",
-          rf"$\bf{{A}}$  Interface accuracy" + (f" (n = {n})" if n else ""))
+strip_box(ax, data, order, "Global DockQ", r"$\bf{A}$")
 os.makedirs(OUT, exist_ok=True)
 fig.savefig(f"{OUT}/Figure_1A.png", bbox_inches="tight")
 plt.close(fig)

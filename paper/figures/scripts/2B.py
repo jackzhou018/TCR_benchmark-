@@ -56,6 +56,7 @@ if not n:
     ax.text(.5, .5, "no DockQ results yet", transform=ax.transAxes,
             ha="center", color="gray", fontsize=11)
 
+ax.set_title(r"$\bf{B}$", loc="left", fontsize=17, pad=6)
 ax.set_xlabel(u"Native resolution (Å)"); ax.set_ylabel(r"Global DockQ")
 ax.set_ylim(-0.02, 1.02)
 ax.legend(title="Model", loc="upper center", bbox_to_anchor=(.5, -.14),

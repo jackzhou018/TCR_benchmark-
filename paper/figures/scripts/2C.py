@@ -54,6 +54,7 @@ for i, (c, g) in enumerate(zip(CLASSES, groups)):
         ax.text(i + 1, 1.06, f"med {np.median(g):.2f}\nn={len(g)}",
                 ha="center", va="bottom", fontsize=10.5)
 
+ax.set_title(r"$\bf{C}$", loc="left", fontsize=17, pad=6)
 ax.set_xticks([1, 2]); ax.set_xticklabels(CLASSES)
 ax.set_xlim(.4, 2.6); ax.set_ylim(-0.02, 1.02)
 ax.set_ylabel(r"Global DockQ")

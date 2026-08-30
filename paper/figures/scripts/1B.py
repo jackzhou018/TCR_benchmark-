@@ -28,7 +28,7 @@ plt.rcParams.update({"font.size": 13, "axes.labelsize": 14,
 d = global_dockq(keep(load_dockq()))
 models = [m for m in MODELS if (d.model == m).any()]
 
-fig, ax = plt.subplots(figsize=(6.6, 5.6))
+fig, ax = plt.subplots(figsize=(6.6, 7.0))
 x = np.arange(len(models))
 bottom = np.zeros(len(models))
 
@@ -56,7 +56,7 @@ ax.set_ylabel("Percentage")
 ax.set_ylim(0, 100); ax.set_yticks(range(0, 101, 10))
 ax.set_xticks(x); ax.set_xticklabels(models, rotation=45, ha="right")
 ax.set_xlim(-.55, len(models) - .45)
-ax.set_title(r"$\bf{B}$", loc="left", fontsize=17, pad=14)
+ax.set_title(r"$\bf{B}$", loc="left", fontsize=17, pad=26)
 # legend top-down: High first, i.e. the reverse of the draw order
 leg = ax.legend(handles=[Patch(facecolor=c, edgecolor="black", label=l) for l, _, _, c in CLASSES],
                 title="CAPRI\nClassification (DockQ)", loc="center left", bbox_to_anchor=(1.02, .5),
