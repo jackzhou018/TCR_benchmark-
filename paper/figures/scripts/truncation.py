@@ -81,9 +81,9 @@ y = PAD
 for letter, cls, pdb, p in panels:
     d.text((PAD, y + 8), letter, font=big, fill="black")
     d.text((PAD + 78, y + 16), cls, font=small, fill="black")
-    # the accession sits after the class name, in the same strip, one grey step back
+    # the accession sits after the class name, in the same strip
     x = PAD + 78 + d.textlength(cls, font=small)
-    d.text((x + 26, y + 16), f"(PDB {pdb})", font=small, fill="#5a5a5a")
+    d.text((x + 26, y + 16), f"(PDB {pdb})", font=small, fill="black")
     out.paste(p, (PAD, y + HDR))
     y += HDR + p.height + GAP
 
