@@ -50,6 +50,7 @@
 \IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
 \makesavenoteenv{longtable}
 \usepackage{graphicx}
+\usepackage{float}
 \makeatletter
 \newsavebox\pandoc@box
 \newcommand*\pandocbounded[1]{% scales image to fit in text height/width
@@ -257,7 +258,7 @@ remapping anywhere in the pipeline: for class I, MHC \ensuremath{\alpha}1\ensure
 (B), TCR\ensuremath{\alpha} (C) and TCR\ensuremath{\beta} (D); for class II, MHC-II\ensuremath{\alpha} (A), peptide (B),
 MHC-II\ensuremath{\beta} (C), TCR\ensuremath{\alpha} (D) and TCR\ensuremath{\beta} (E).
 
-\begin{figure}
+\begin{figure}[H]
 \centering
 \includegraphics[width=0.85\linewidth,height=\textheight,keepaspectratio,alt={Domain truncation applied to the benchmark complexes. (A) Class I. The TCR constant domains, the MHC \ensuremath{\alpha}3 domain and \ensuremath{\beta}2-microglobulin are removed, leaving the MHC-I \ensuremath{\alpha}1\ensuremath{\alpha}2 peptide-binding platform, the peptide and the paired TCR variable domains. (B) Class II. The TCR constant domains and the MHC-II \ensuremath{\alpha}2 and \ensuremath{\beta}2 domains are removed, leaving the \ensuremath{\alpha}1 and \ensuremath{\beta}1 peptide-binding domains, the peptide and the paired TCR variable domains. Retained chains are coloured by role; removed regions are grey.}]{Figure_truncation.png}
 \caption{\textbf{Domain truncation applied to the benchmark complexes.}
