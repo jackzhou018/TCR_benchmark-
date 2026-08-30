@@ -842,6 +842,46 @@ place the TCR more than 30\ensuremath{^{\circ}} apart, and on 10 of them more th
 apart, while building the same pMHC and the same TCR fold. The
 disagreement is a docking disagreement, not a folding one.
 
+The disagreement is also bimodal rather than graded. Of the 126
+complexes, 106 place the TCR within 30\ensuremath{^{\circ}} of each other and only 12 exceed
+60\ensuremath{^{\circ}}; there is essentially nothing in between, and those 12 are exactly the
+12 largest cross-model RMSDs. Superposing each prediction's MHC on the
+native's and measuring its TCR against the native's separates the two
+models on these cases: among the 20 complexes that disagree by more than
+30\ensuremath{^{\circ}}, AlphaFold 3 is the misplaced one on 12, ESMFold2 on 4, and both are
+misdocked on 4. Over the 10 largest disagreements the median Global
+DockQ is 0.335 for AlphaFold 3 and 0.581 for ESMFold2, and only 2 of the
+10 have both models at medium-or-better accuracy, against 101 of the
+remaining 116. Where the two architectures disagree about docking, at
+least one of them has failed, and it is usually AlphaFold 3.
+
+Two geometrically distinct failures produce the disagreement. In the
+first, the misplaced TCR is rotated 100--177\ensuremath{^{\circ}} \emph{and} translated
+50--63 \AA{}: it is not docked on the groove at all but on another surface of
+the MHC, still burying 55--150 C\ensuremath{\alpha} contacts there while making no contact
+with the peptide (9EJG, 8RYO, 7RK7, 7PB2; the fifth such case, 9EJH, is
+the inverse --- its native TCR is the one docked away from the peptide,
+and AlphaFold 3 builds the canonical peptide-centred pose instead). In the second,
+the TCR still straddles the groove and still contacts the peptide, but
+is turned around on it: 70--177\ensuremath{^{\circ}} of rotation with the centre of mass only
+4--12 \AA{} from where the other model puts it, a reversal of docking
+polarity rather than a relocation (9RU5, 8ES9, 7RM4, 7RRG, 9NW2).
+
+The relocations have a specific and avoidable cause. Projecting the TCR
+centre on the axis from the MHC centre to the peptide centre places the
+native TCR 28.8 \AA{} above the peptide-binding platform in the median
+complex, and no class I native below 14 \AA{}. Three predictions --- 8RYO, 7RK7 and 7PB2,
+all AlphaFold 3, all class I --- put the TCR 24--26 \AA{} \emph{below} the
+platform, docked on the \ensuremath{\beta}-sheet floor that in the intact molecule is
+covered by the \ensuremath{\alpha}3 domain and \ensuremath{\beta}2-microglobulin and that the domain
+truncation of Section 2.2 leaves exposed. On these three complexes
+AlphaFold 3 scores 0.28, 0.24 and 0.31 while ESMFold2, given the same
+truncated input, scores 0.91, 0.53 and 0.63 and places the TCR within
+3--19\ensuremath{^{\circ}} of the native. Part of AlphaFold 3's tail of docking failures is
+therefore an artefact of presenting it with a non-physiological surface,
+not a failure to recognise the correct one --- a caveat that applies to
+any truncated-input benchmark, and one ESMFold2 appears not to share.
+
 That disagreement is a strong, entirely reference-free predictor of
 accuracy (Figure 5A). Cross-model C\ensuremath{\alpha} RMSD correlates with AlphaFold 3's
 Global DockQ at Spearman \ensuremath{\rho} = \ensuremath{-}0.756 and with ESMFold2's at \ensuremath{\rho} = \ensuremath{-}0.670,
