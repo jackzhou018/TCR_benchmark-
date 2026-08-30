@@ -1,6 +1,6 @@
 """Figure 4: the single-prediction composite score (MOGGER) against the published alternatives.
 
-Data: mogger/results/{predictions,correlations,paired_comparison}.csv -- one AF3 prediction
+Data: mogger/results/{predictions,correlations}.csv -- one AF3 prediction
 per structure, its own confidence outputs, no native and no second predictor.
 Formatting follows 3.py/4.py: one 1x3 figure, bold left-aligned panel letters.
 """
@@ -22,10 +22,9 @@ MOG, RF, GREY = "#5a4a9c", "#b5545c", "#7a7a7a"
 
 P = pd.read_csv(f"{BASE}/mogger/results/predictions.csv")
 C = pd.read_csv(f"{BASE}/mogger/results/correlations.csv")
-D = pd.read_csv(f"{BASE}/mogger/results/paired_comparison.csv")
 assert len(P) == 126, len(P)
 
-fig, ax = plt.subplots(1, 3, figsize=(11.5, 3.5))
+fig, ax = plt.subplots(1, 2, figsize=(7.7, 3.5))
 
 # A -- the score itself against what it is trying to predict
 a = ax[0]
@@ -66,23 +65,6 @@ b.legend(handles=[plt.Rectangle((0, 0), 1, 1, facecolor="white", edgecolor="blac
                                 label=l) for h, l in [("", "Pearson $r$"), ("///", "Spearman ρ")]],
          loc="upper right", frameon=False, ncol=2)
 b.set_title(r"$\bf{B}$  Scores of one AF3 prediction (n = 126)", loc="left")
-
-# C -- MOGGER minus the random forest, per subset, paired bootstrap
-c = ax[2]
-SUB = ["All 126 (primary)", "Class I", "PDB-unseen Class I", "Class II"]
-LAB = ["all\n(n=126)", "Class I\n(n=111)", "PDB-unseen\n(n=27)", "Class II\n(n=15)"]
-c.axhline(0, color="black", lw=1)
-for i, (metric, off, col, hatch) in enumerate([("Pearson r", -.5, MOG, ""),
-                                               ("Spearman rho", .5, MOG, "///")]):
-    d = D[D.metric == metric].set_index("subset").loc[SUB]
-    v = d.mogger_minus_rf.values
-    err = np.vstack([v - d.ci_low.values, d.ci_high.values - v])
-    c.bar(np.arange(4) + off * .38, v, width=.34, color=col, alpha=.8, hatch=hatch,
-          edgecolor="black", linewidth=.7, yerr=err, capsize=2.5,
-          error_kw=dict(lw=1, ecolor="black"))
-c.set_xticks(range(4)); c.set_xticklabels(LAB)
-c.set_ylabel("MOGGER − RF (correlation)")
-c.set_title(r"$\bf{C}$  Paired advantage over the RF", loc="left")
 
 fig.tight_layout()
 fig.savefig(f"{OUT}/Figure_mogger.png", dpi=300)
