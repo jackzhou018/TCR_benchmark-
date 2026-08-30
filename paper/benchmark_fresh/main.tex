@@ -286,9 +286,8 @@ Protenix [22], an open reproduction of the AlphaFold 3 architecture,
 was run through its public server with the same inputs, and the
 top-ranked model scored.
 
-ESMFold2 (the \texttt{biohub/ESMFold2} checkpoint, revision
-\texttt{8fc3ff47}, conditioned on the \texttt{biohub/ESMC-6B} language
-model, revision \texttt{45b0fa5d}) [21] was run through the ESM SDK
+ESMFold2 (the \texttt{biohub/ESMFold2} checkpoint, conditioned on the
+\texttt{biohub/ESMC-6B} language model) [21] was run through the ESM SDK
 API as model \texttt{esmfold2-fast-2026-05} with the SDK defaults of 10
 refinement loops and 100 sampling steps. ESMFold2 is a diffusion
 structure predictor in the same sense as AlphaFold 3, but it takes no
@@ -299,7 +298,7 @@ a strict one, since the two methods share the diffusion generative head
 and little else on the conditioning side.
 
 TCRmodel2 [8] was installed locally from the Pierce laboratory
-repository (commit \texttt{90536de}, AlphaFold 2.3 base,
+repository (AlphaFold 2.3 base,
 \texttt{alphafold\_params\_2022-12-06}) with
 \texttt{-\/-max\_template\_date=2021-09-30} applied explicitly to both
 the TCR and the pMHC template searches; the default is effectively
