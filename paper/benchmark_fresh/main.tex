@@ -224,14 +224,14 @@ primary publications, and ten were excluded from scoring. Five (8TRL,
 8TRQ, 8TRR, 9NIG, 9WNT) contain modified peptide residues that a
 standard FASTA sequence cannot represent, and because the modification
 is in every case part of the interaction being modelled, predicting
-these complexes from sequence alone is not well posed. Four (8VD0, 8VQ8,
-9AUD, 9C3E) are engineered constructs in which the peptide is covalently
-fused to the MHC through a linker; modelling their components as
-separate chains would alter the connectivity of the experiment. The
-last, 9J4S, has no physical TCR--pMHC interface in any author-defined
-assembly of the deposited structure and so cannot be scored at all
-(Section 2.3). This leaves 126 scoreable complexes, 111 class I and 15 class
-II.
+these complexes from sequence alone is not well posed. Four (8VD0,
+8VQ8, 9AUD, 9C3E) are engineered constructs in which the peptide is
+covalently fused to the MHC through a linker; modelling their
+components as separate chains would alter the connectivity of the
+experiment. The last, 9J4S, has no physical TCR--pMHC interface in any
+author-defined assembly of the deposited structure and so cannot be
+scored at all. This leaves 126 scoreable complexes, 111 class I and 15
+class II.
 
 No redundancy filter or resolution cut was applied to the primary set.
 TCR variable-domain identity is a poor novelty axis --- germline V-gene
@@ -257,8 +257,6 @@ remapping anywhere in the pipeline: for class I, MHC \ensuremath{\alpha}1\ensure
 (B), TCR\ensuremath{\alpha} (C) and TCR\ensuremath{\beta} (D); for class II, MHC-II\ensuremath{\alpha} (A), peptide (B),
 MHC-II\ensuremath{\beta} (C), TCR\ensuremath{\alpha} (D) and TCR\ensuremath{\beta} (E).
 
-\subsection{2.3 Reference structures}\label{reference-structures}
-
 \begin{figure}
 \centering
 \includegraphics[width=0.85\linewidth,height=\textheight,keepaspectratio,alt={Domain truncation applied to the benchmark complexes. (A) Class I. The TCR constant domains, the MHC \ensuremath{\alpha}3 domain and \ensuremath{\beta}2-microglobulin are removed, leaving the MHC-I \ensuremath{\alpha}1\ensuremath{\alpha}2 peptide-binding platform, the peptide and the paired TCR variable domains. (B) Class II. The TCR constant domains and the MHC-II \ensuremath{\alpha}2 and \ensuremath{\beta}2 domains are removed, leaving the \ensuremath{\alpha}1 and \ensuremath{\beta}1 peptide-binding domains, the peptide and the paired TCR variable domains. Retained chains are coloured by role; removed regions are grey.}]{Figure_truncation.png}
@@ -272,45 +270,7 @@ the paired TCR variable domains. Retained chains are coloured by role;
 removed regions are grey.}
 \end{figure}
 
-Experimental references were rebuilt from RCSB rather than used as
-deposited. For each entry, the chains named in the per-entry chain
-manifest were extracted and cropped to the benchmark FASTA span, with a
-fallback that searches every chain when the manifest's author chain is
-wrong (7Z50's peptide is deposited as chain T, not B). Alternate
-locations were resolved deterministically to the highest-occupancy
-conformer, with altloc A as tie-breaker.
-
-Cutting the right sequence is not sufficient --- it must come from the
-right copy. Forty-six of the 136 entries are built from files holding
-several complete complexes, and the deposited asymmetric unit is
-frequently not a complex at all. Each rebuilt native was therefore
-measured for its own interfaces and repaired where necessary by one of
-two routes: fetching the author-defined biological assembly
-(\texttt{\textless{}PDB\textgreater{}-assembly\textless{}N\textgreater{}.cif},
-ranking candidates by full-length chains, then a paired TCR, then
-peptide contact, then interface size), or re-imaging coordinates wrapped
-across the periodic boundary by sliding a disconnected group by whole
-unit cells. Six natives depend on these repairs (7L1D, 7RRG, 7SU9, 7Z50,
-9K2I, 9LLU); 7SU9 requires a single \ensuremath{-}a translation, which is not a
-biological-assembly operator and therefore appears in no assembly file.
-
-An automated audit checked four properties of every native: crop
-exactness against the FASTA, one connected complex, no better-contacting
-alternative chain combination, and all chains drawn from a single
-author-defined assembly. The last test is the strict one --- a
-contact-count test alone cannot distinguish a crystal lattice contact
-between two copies from a real interface. It identified 9J4S, for which
-neither author-defined assembly contains any contact between the TCR
-variable domains and the pMHC; the apparent interface obtained by mixing
-chains from different assemblies is a lattice contact. It is excluded
-(Section 2.1) and a DockQ score is never computed for it.
-
-Four natives (9EJG, 9EJH, 9EJI, 9LLU) have a TCR that is docked on the
-MHC but not touching the peptide. This is biology --- 9EJI is a
-published peptide-independent binder --- and these entries were
-retained.
-
-\subsection{2.4 Structure prediction
+\subsection{2.3 Structure prediction
 methods}\label{structure-prediction-methods}
 
 Four methods were run on identical inputs.
@@ -348,9 +308,9 @@ was therefore run on class I only, giving 111 predictions.
 
 Mean end-to-end runtimes were 5.2 s per complex for the ESMFold2 API
 (median, IQR 4.9--6.4 s) and 13.4 s per complex for a local AlphaFold 3
-run at default sampler settings on one RTX PRO 6000 (Section 2.9).
+run at default sampler settings on one RTX PRO 6000 (Section 2.8).
 
-\subsection{2.5 Accuracy metrics}\label{accuracy-metrics}
+\subsection{2.4 Accuracy metrics}\label{accuracy-metrics}
 
 Interface accuracy was measured with DockQ v2.1.3 [14,15], run once
 per complex with an explicit identity chain mapping. Without one, DockQ
@@ -407,7 +367,7 @@ RMSDs near zero; that deforming a CDR3 loop raises its own
 framework-aligned RMSD; and that permuting chain identifiers changes
 nothing, because chain assignment is by sequence and biological role.
 
-\subsection{2.6 Confidence and reference-free quality
+\subsection{2.5 Confidence and reference-free quality
 scores}\label{confidence-and-reference-free-quality-scores}
 
 Each method's own interface confidence (ipTM, and pTM and mean pLDDT
@@ -421,7 +381,7 @@ targets whose PDB identifiers do not appear in its training set (n =
 pDockQ, CDR3\ensuremath{\alpha} pLDDT and the worst pairwise PAE from a single AlphaFold 3
 prediction.
 
-\subsection{2.7 Similarity to the pre-cutoff structural
+\subsection{2.6 Similarity to the pre-cutoff structural
 record}\label{similarity-to-the-pre-cutoff-structural-record}
 
 Because neither AlphaFold 3's nor Protenix's actual training list is
@@ -450,7 +410,7 @@ chain to come from one reference entry, and is the entry maximising mean
 identity across them. No benchmark entry appears in the reference set;
 all 136 were released on or after 13 October 2021.
 
-\subsection{2.8 Cross-model divergence}\label{cross-model-divergence}
+\subsection{2.7 Cross-model divergence}\label{cross-model-divergence}
 
 Because AlphaFold 3 and ESMFold2 predict the same FASTA with the same
 chain letters and 1..N residue numbering, their predictions correspond
@@ -465,7 +425,7 @@ frame and reports the rotation and centre-of-mass offset carrying
 AlphaFold 3's TCR onto ESMFold2's, with the TCR's own internal RMSD
 reported for contrast.
 
-\subsection{2.9 Sampler instrumentation and
+\subsection{2.8 Sampler instrumentation and
 timing}\label{sampler-instrumentation-and-timing}
 
 Both models' official samplers were patched observationally to retain
@@ -490,7 +450,7 @@ warm-up predictions run and discarded before timing. Instrumentation
 costs \textasciitilde2\% and was run as a separate pass, so the baseline
 track is stock AlphaFold 3.
 
-\subsection{2.10 Statistics and software}\label{statistics-and-software}
+\subsection{2.9 Statistics and software}\label{statistics-and-software}
 
 Paired method comparisons use the Wilcoxon signed-rank test on the
 complexes both methods predicted. Correlations are Pearson and Spearman
