@@ -65,7 +65,7 @@ b.set_ylabel("correlation with Global DockQ"); b.set_ylim(0, 0.95)
 b.legend(handles=[plt.Rectangle((0, 0), 1, 1, facecolor="white", edgecolor="black", hatch=h,
                                 label=l) for h, l in [("", "Pearson $r$"), ("///", "Spearman ρ")]],
          loc="upper right", frameon=False, ncol=2)
-b.set_title(r"$\bf{B}$  Reference-free scores, all 126", loc="left")
+b.set_title(r"$\bf{B}$  Scores of one AF3 prediction (n = 126)", loc="left")
 
 # C -- MOGGER minus the random forest, per subset, paired bootstrap
 c = ax[2]

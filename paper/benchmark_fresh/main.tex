@@ -742,11 +742,18 @@ one AlphaFold 3 prediction, with no second structure and no reference
 --- reaches r = 0.712 (95\% CI 0.617--0.791) and \ensuremath{\rho} = 0.725
 (0.624--0.803) (Figure 4A).
 
-It is the best of the reference-free scores on this benchmark (Figure
-4B). On the same 126 complexes the published random-forest quality-tier
+It is the best of the scores available for an AlphaFold 3 prediction
+(Figure 4B). On the same 126 complexes the published random-forest quality-tier
 classifier [11] reaches r = 0.662 (\ensuremath{\rho} = 0.674), AlphaFold 3's own ipTM
 0.660 (0.654) and pDockQ 0.660 (0.679) --- that is, the classifier does
-no better than the two confidence scores it was built to improve on. The
+no better than the two confidence scores it was built to improve on. It is not, however,
+the best-calibrated confidence signal on this benchmark: ESMFold2's own
+ipTM orders ESMFold2's predictions better (r = 0.793, \ensuremath{\rho} = 0.777,
+Section 3.7) than any AlphaFold 3-derived score orders AlphaFold 3's.
+The two are not like for like --- each score is judged on the
+predictions of the model that produced it, and no equivalent composite
+was built for ESMFold2 --- but the composite buys AlphaFold 3 part, not
+all, of the calibration ESMFold2 has without one. The
 paired difference between the composite and the classifier is +0.050
 Pearson (95\% bootstrap CI +0.015 to +0.085) and +0.051 Spearman (+0.008
 to +0.098), so the advantage over all 126 complexes excludes zero on
@@ -772,12 +779,13 @@ are beaten by a quantity that needs no quality model at all
 
 \begin{figure}
 \centering
-\includegraphics[width=1\linewidth,height=\textheight,keepaspectratio,alt={The composite single-prediction confidence score against the published alternatives. (A) Global DockQ against the composite score for the 126 complexes, with the linear fit and both correlations; shaded bands are the CAPRI quality classes. (B) Pearson r and Spearman rho with Global DockQ for every reference-free score over all 126 complexes; whiskers are 95 percent bootstrap intervals. (C) Paired composite-minus-random-forest difference in each correlation, by subset, with 95 percent paired-bootstrap intervals.}]{Figure_mogger.png}
+\includegraphics[width=1\linewidth,height=\textheight,keepaspectratio,alt={The composite single-prediction confidence score against the published alternatives. (A) Global DockQ against the composite score for the 126 complexes, with the linear fit and both correlations; shaded bands are the CAPRI quality classes. (B) Pearson r and Spearman rho with Global DockQ for every score computable from one AlphaFold 3 prediction, over all 126 complexes; whiskers are 95 percent bootstrap intervals. (C) Paired composite-minus-random-forest difference in each correlation, by subset, with 95 percent paired-bootstrap intervals.}]{Figure_mogger.png}
 \caption{\textbf{A composite single-prediction score against the
 published alternatives.} (\textbf{A}) Global DockQ against MOGGER for
 the 126 complexes, with the linear fit and both correlations; shaded
 bands are the CAPRI quality classes. (\textbf{B}) Correlation with
-Global DockQ for every reference-free score over all 126 complexes;
+Global DockQ for every score computable from one AlphaFold 3
+prediction, over all 126 complexes;
 whiskers are 95\% bootstrap intervals. (\textbf{C}) Paired MOGGER-minus
 random-forest difference in each correlation, by subset; whiskers are
 95\% paired-bootstrap intervals, and only the full benchmark excludes
