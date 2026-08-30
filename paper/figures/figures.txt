@@ -1,6 +1,9 @@
 Figure 1:
 
-Structural figure showing what we truncated for Class I structures and Class II structures. 
+Structural figure showing what we truncated for Class I structures and Class II structures.
+Rendered from PDB 7RTR (Class I) and 8PJG (Class II); the accessions are set in
+scripts/truncation.py, which is the only record of them.
+
 
 Figure 2:
 

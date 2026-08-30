@@ -10,8 +10,11 @@ from PIL import Image, ImageDraw, ImageFont
 import matplotlib
 
 OUT = "/14TBDrive/6TBDrive1_backup/benchmark_fresh/paper/figures/outputs"
-SRC = [("A", "Class I", "panel_truncation_classI.png"),
-       ("B", "Class II", "panel_truncation_classII.png")]
+# The entry each ChimeraX panel was rendered from. The panels arrive as finished PNGs with
+# no accession drawn on them, so this is the only record of it -- and it is printed on the
+# figure, so it has to be edited here if a panel is ever re-rendered from a different entry.
+SRC = [("A", "Class I", "7RTR", "panel_truncation_classI.png"),
+       ("B", "Class II", "8PJG", "panel_truncation_classII.png")]
 PAD, GAP, HDR = 24, 46, 92
 FONT = os.path.join(os.path.dirname(matplotlib.__file__), "mpl-data/fonts/ttf/DejaVuSans-Bold.ttf")
 
@@ -58,25 +61,29 @@ def trim(im, thresh=248):
 
 
 panels = []
-for letter, cls, name in SRC:
+for letter, cls, pdb, name in SRC:
     im = drop_annotation_box(Image.open(f"{OUT}/{name}"))
     bg = Image.new("RGB", im.size, "white")
     bg.paste(im, mask=im.split()[-1] if im.mode == "RGBA" else None)
-    panels.append((letter, cls, trim(bg)))
+    panels.append((letter, cls, pdb, trim(bg)))
 
-W = max(p.width for _, _, p in panels)
-panels = [(l, c, p if p.width == W else p.resize((W, round(p.height * W / p.width)), Image.LANCZOS))
-          for l, c, p in panels]
+W = max(p.width for *_, p in panels)
+panels = [(l, c, i, p if p.width == W else p.resize((W, round(p.height * W / p.width)),
+                                                    Image.LANCZOS))
+          for l, c, i, p in panels]
 
-H = sum(HDR + p.height for _, _, p in panels) + GAP + 2 * PAD
+H = sum(HDR + p.height for *_, p in panels) + GAP + 2 * PAD
 out = Image.new("RGB", (W + 2 * PAD, H), "white")
 d = ImageDraw.Draw(out)
 big, small = ImageFont.truetype(FONT, 62), ImageFont.truetype(FONT, 52)
 
 y = PAD
-for letter, cls, p in panels:
+for letter, cls, pdb, p in panels:
     d.text((PAD, y + 8), letter, font=big, fill="black")
     d.text((PAD + 78, y + 16), cls, font=small, fill="black")
+    # the accession sits after the class name, in the same strip, one grey step back
+    x = PAD + 78 + d.textlength(cls, font=small)
+    d.text((x + 26, y + 16), f"(PDB {pdb})", font=small, fill="#5a5a5a")
     out.paste(p, (PAD, y + HDR))
     y += HDR + p.height + GAP
 
