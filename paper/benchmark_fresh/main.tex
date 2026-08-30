@@ -89,48 +89,50 @@ their disagreement predicts accuracy}
 \author{[Author list to be completed]}
 \date{28 August 2026}
 
-\begin{document}
-\maketitle
-\begin{abstract}
-T cell receptor (TCR) recognition of peptide--MHC (pMHC) is the central
-specificity event of cellular immunity, and structure prediction is now
-the main route to modelling it at scale. Published benchmarks agree that
+\begin{document} \maketitle \begin{abstract} T cell receptor (TCR)
+recognition of peptide--MHC (pMHC) is the central specificity event of
+cellular immunity, and structure prediction is now the main route to
+modelling it at scale. Published benchmarks agree that
 multiple-sequence-alignment (MSA)-based predictors, and AlphaFold 3 in
 particular, lead the field, and that protein-language-model (PLM)
 predictors trail them. We revisited that conclusion on a benchmark of
 136 TCR--pMHC entries released after the 30 September 2021 training
 cutoff shared by every method tested, of which 126 (111 class I, 15
-class II) carry a scoreable experimental reference. All methods received
-byte-identical truncated inputs and a single fixed chain convention, and
-every model was scored against natives rebuilt from the biological
-assembly with an explicit identity chain mapping. AlphaFold 3 (median
-Global DockQ 0.751) and ESMFold2, a single-sequence diffusion predictor
-conditioned on a 6-billion-parameter language model rather than on an
-MSA (0.736), were statistically indistinguishable (paired Wilcoxon p =
-0.68); both exceeded Protenix (0.701, p = 0.045 and p = 0.0009) and the
-TCR-specialised TCRmodel2 (0.708 on the 111 class I targets) was not
-separable from either. Equal accuracy did not mean equivalent behaviour.
-ESMFold2's ipTM tracked accuracy far more tightly than AlphaFold 3's
-(Pearson r = 0.79 vs 0.66); AlphaFold 3 was more sensitive to reference
-resolution; and the two models placed the TCR more than 90\ensuremath{^{\circ}} apart on 10
-of 126 complexes while agreeing on the pMHC to within 0.44 \AA{}. The C\ensuremath{\alpha}
-RMSD between the two predictions --- a quantity computable without any
-experimental structure --- predicted the worse of the two DockQ scores
-better than either model's own confidence (Spearman \ensuremath{\rho} = \ensuremath{-}0.884 vs +0.60
-and +0.64), and the two methods together reached medium-or-better
-accuracy on 119 of 126 complexes against 107 and 115 individually.
-Instrumenting both samplers showed the equal accuracy is reached by
-different routes: AlphaFold 3 is still 44 \AA{} from its answer at the
-midpoint of denoising and converges only in the final fifth of its
-schedule, whereas ESMFold2 is within 6 \AA{} at its midpoint. Exploiting
-that, cutting AlphaFold 3 from 200 to 160 denoising steps and from 5
-diffusion samples to 1 gave a 1.80\ensuremath{\times} speed-up on 30 complexes at a cost
-of \ensuremath{-}0.010 Global DockQ (95\% CI \ensuremath{-}0.032 to +0.007, p = 0.33). We conclude
-that MSAs are not required for state-of-the-art TCR--pMHC modelling,
-that cross-architecture agreement is a strong reference-free quality
+class II) carry a scoreable experimental reference. All methods
+received byte-identical truncated inputs and a single fixed chain
+convention, and every model was scored with an explicit identity chain
+mapping against the same experimental references, cropped from the
+deposited coordinates to the input sequence and verified to draw all
+chains from a single author-defined assembly. AlphaFold 3 (median
+Global DockQ 0.751) and ESMFold2, a single-sequence diffusion
+predictor conditioned on a 6-billion-parameter language model rather
+than on an MSA (0.736), were statistically indistinguishable (paired
+Wilcoxon p = 0.68); both exceeded Protenix (0.701, p = 0.045 and p =
+0.0009) and the TCR-specialised TCRmodel2 (0.708 on the 111 class I
+targets) was not separable from either. Equal accuracy did not mean
+equivalent behaviour. ESMFold2's ipTM tracked accuracy far more
+tightly than AlphaFold 3's (Pearson r = 0.79 vs 0.66); AlphaFold 3 was
+more sensitive to reference resolution; and the two models placed the
+TCR more than 90\ensuremath{^{\circ}} apart on 10 of 126 complexes
+while agreeing on the pMHC to within 0.44 \AA{}. The
+C\ensuremath{\alpha} RMSD between the two predictions --- a quantity
+computable without any experimental structure --- predicted the worse
+of the two DockQ scores better than either model's own confidence
+(Spearman \ensuremath{\rho} = \ensuremath{-}0.884 vs +0.60 and +0.64),
+and the two methods together reached medium-or-better accuracy on 119
+of 126 complexes against 107 and 115 individually. Instrumenting both
+samplers showed the equal accuracy is reached by different routes:
+AlphaFold 3 is still 44 \AA{} from its answer at the midpoint of
+denoising and converges only in the final fifth of its schedule,
+whereas ESMFold2 is within 6 \AA{} at its midpoint. Exploiting that,
+cutting AlphaFold 3 from 200 to 160 denoising steps and from 5
+diffusion samples to 1 gave a 1.80\ensuremath{\times} speed-up on 30
+complexes at a cost of \ensuremath{-}0.010 Global DockQ (95\% CI
+\ensuremath{-}0.032 to +0.007, p = 0.33). We conclude that MSAs are
+not required for state-of-the-art TCR--pMHC modelling, that
+cross-architecture agreement is a strong reference-free quality
 signal, and that the default AlphaFold 3 sampler is substantially
-over-provisioned for complexes of this size.
-\end{abstract}
+over-provisioned for complexes of this size. \end{abstract}
 
 \section{1 Introduction}\label{introduction}
 
@@ -188,18 +190,20 @@ sequence --- achieve comparable accuracy, the more informative questions
 concern the route each takes to that accuracy and whether the
 disagreements between them carry usable information.
 
-Here we assemble a benchmark of 136 TCR--pMHC entries released after 30
-September 2021, the training cutoff shared by AlphaFold 3, Protenix and
-ESMFold2, of which 126 carry a scoreable experimental reference. Every
-method receives identical truncated inputs under one chain convention,
-and every prediction is scored against a native rebuilt from the correct
-biological assembly. We report interface accuracy (DockQ), TCR-specific
-accuracy (MHC-aligned weighted all-CDR C\ensuremath{\alpha} RMSD and framework-aligned
-CDR3 all-atom RMSD), confidence calibration, sensitivity to reference
-resolution and to training-set similarity, the structural anatomy of the
-disagreement between the two leading models, the internal trajectories
-of both diffusion samplers, and the wall-clock cost of the default
-AlphaFold 3 sampler settings.
+Here we assemble a benchmark of 136 TCR--pMHC entries released after
+30 September 2021, the training cutoff shared by AlphaFold 3, Protenix
+and ESMFold2, of which 126 carry a scoreable experimental reference.
+Every method receives identical truncated inputs under one chain
+convention, and every prediction is scored against a native cropped
+from the deposited coordinates and audited to come from a single
+author-defined assembly. We report interface accuracy (DockQ),
+TCR-specific accuracy (MHC-aligned weighted all-CDR
+C\ensuremath{\alpha} RMSD and framework-aligned CDR3 all-atom RMSD),
+confidence calibration, sensitivity to reference resolution and to
+training-set similarity, the structural anatomy of the disagreement
+between the two leading models, the internal trajectories of both
+diffusion samplers, and the wall-clock cost of the default AlphaFold 3
+sampler settings.
 
 \section{2 Materials and methods}\label{materials-and-methods}
 
@@ -253,6 +257,8 @@ remapping anywhere in the pipeline: for class I, MHC \ensuremath{\alpha}1\ensure
 (B), TCR\ensuremath{\alpha} (C) and TCR\ensuremath{\beta} (D); for class II, MHC-II\ensuremath{\alpha} (A), peptide (B),
 MHC-II\ensuremath{\beta} (C), TCR\ensuremath{\alpha} (D) and TCR\ensuremath{\beta} (E).
 
+\subsection{2.3 Reference structures}\label{reference-structures}
+
 \begin{figure}
 \centering
 \includegraphics[width=0.85\linewidth,height=\textheight,keepaspectratio,alt={Domain truncation applied to the benchmark complexes. (A) Class I. The TCR constant domains, the MHC \ensuremath{\alpha}3 domain and \ensuremath{\beta}2-microglobulin are removed, leaving the MHC-I \ensuremath{\alpha}1\ensuremath{\alpha}2 peptide-binding platform, the peptide and the paired TCR variable domains. (B) Class II. The TCR constant domains and the MHC-II \ensuremath{\alpha}2 and \ensuremath{\beta}2 domains are removed, leaving the \ensuremath{\alpha}1 and \ensuremath{\beta}1 peptide-binding domains, the peptide and the paired TCR variable domains. Retained chains are coloured by role; removed regions are grey.}]{Figure_truncation.png}
@@ -265,8 +271,6 @@ removed, leaving the \ensuremath{\alpha}1 and \ensuremath{\beta}1 peptide-bindin
 the paired TCR variable domains. Retained chains are coloured by role;
 removed regions are grey.}
 \end{figure}
-
-\subsection{2.3 Reference structures}\label{reference-structures}
 
 Experimental references were rebuilt from RCSB rather than used as
 deposited. For each entry, the chains named in the per-entry chain
