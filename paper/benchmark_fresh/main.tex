@@ -308,7 +308,7 @@ was therefore run on class I only, giving 111 predictions.
 
 Mean end-to-end runtimes were 5.2 s per complex for the ESMFold2 API
 (median, IQR 4.9--6.4 s) and 13.4 s per complex for a local AlphaFold 3
-run at default sampler settings on one RTX PRO 6000 (Section 2.11).
+run at default sampler settings on one RTX PRO 6000 (Section 2.9).
 
 \subsection{2.4 Interface accuracy}\label{interface-accuracy}
 
@@ -387,51 +387,7 @@ targets whose PDB identifiers do not appear in its training set (n =
 pDockQ, CDR3\ensuremath{\alpha} pLDDT and the worst pairwise PAE from a single AlphaFold 3
 prediction.
 
-\subsection{2.9 Similarity to the pre-cutoff structural
-record}\label{similarity-to-the-pre-cutoff-structural-record}
-
-Because neither AlphaFold 3's nor Protenix's actual training list is
-public, we used structures available in the PDB on or before 30
-September 2021 as a reproducible proxy. Candidate reference entries were
-the union of TCR3d's class I and class II complex tables and the STCRDab
-all-structures summary [2] filtered to \texttt{TCRtype\ =\ abTCR}
-and \texttt{mhc\_type\ \ensuremath{\in}\ \{MH1,\ MH2\}}; of 395 candidates, 259 were
-released on or before the cutoff per RCSB
-\texttt{initial\_release\_date}, yielding 1,112 consistently cropped
-chains from 258 complete complexes. Every polymer entity of every
-reference entry was aligned by blastp against the benchmark's own
-cropped chains, and the best-scoring benchmark role defined both the
-role assignment and the crop, so reference chains are cut to exactly the
-domain boundaries the benchmark uses and role assignment never depends
-on a database's chain-letter column. Where an entry's two TCR entities
-both matched the same role, the pairing was forced and the weaker
-preference reassigned.
-
-Identity was reported over the benchmark chain length with \ensuremath{\geq} 80\% query
-coverage required. Peptides (4--16 residues) are too short for blastp
-heuristics and were instead locally aligned (BLOSUM62, gap \ensuremath{-}11/\ensuremath{-}1)
-against every reference peptide under the same coverage rule. The
-\emph{closest complete reference complex} requires every corresponding
-chain to come from one reference entry, and is the entry maximising mean
-identity across them. No benchmark entry appears in the reference set;
-all 136 were released on or after 13 October 2021.
-
-\subsection{2.10 Cross-model divergence}\label{cross-model-divergence}
-
-Because AlphaFold 3 and ESMFold2 predict the same FASTA with the same
-chain letters and 1..N residue numbering, their predictions correspond
-residue-for-residue with no alignment step. For each complex we computed
-C\ensuremath{\alpha} RMSD between the two predictions in four interface frames
-(peptide--TCR\ensuremath{\alpha}, peptide--TCR\ensuremath{\beta}, MHC--TCR\ensuremath{\alpha}, MHC--TCR\ensuremath{\beta}; interface residues
-defined as the union over both predictions of C\ensuremath{\alpha} within 10 \AA{} across the
-interface, matching DockQ's cutoff), the peptide RMSD after
-superposition on the MHC, and the peptide RMSD after superposition on
-itself. The rigid-body decomposition places both predictions in the MHC
-frame and reports the rotation and centre-of-mass offset carrying
-AlphaFold 3's TCR onto ESMFold2's, with the TCR's own internal RMSD
-reported for contrast.
-
-\subsection{2.11 Sampler instrumentation and
+\subsection{2.9 Sampler instrumentation and
 timing}\label{sampler-instrumentation-and-timing}
 
 Both models' official samplers were patched observationally to retain
@@ -456,15 +412,12 @@ warm-up predictions run and discarded before timing. Instrumentation
 costs \textasciitilde2\% and was run as a separate pass, so the baseline
 track is stock AlphaFold 3.
 
-\subsection{2.12 Statistics and software}\label{statistics-and-software}
+\subsection{2.10 Statistics and software}\label{statistics-and-software}
 
 Paired method comparisons use the Wilcoxon signed-rank test on the
 complexes both methods predicted. Correlations are Pearson and Spearman
 with bootstrap confidence intervals (10,000 resamples, fixed seed);
 regressions use ordinary least squares with HC3 robust standard errors.
-Software versions: Python 3.13.9 and 3.11.16, DockQ 2.1.3, ANARCI 1.3
-(HMMER 3.4), Biopython 1.87/1.81, blastp 2.12.0+, NumPy 2.3.5, SciPy
-1.16.3, statsmodels 0.14.5, JAX 0.9.1, transformers 4.57.6, esm 3.3.0.
 
 \section{3 Results}\label{results}
 
