@@ -308,14 +308,12 @@ was therefore run on class I only, giving 111 predictions.
 
 Mean end-to-end runtimes were 5.2 s per complex for the ESMFold2 API
 (median, IQR 4.9--6.4 s) and 13.4 s per complex for a local AlphaFold 3
-run at default sampler settings on one RTX PRO 6000 (Section 2.8).
+run at default sampler settings on one RTX PRO 6000 (Section 2.11).
 
-\subsection{2.4 Accuracy metrics}\label{accuracy-metrics}
+\subsection{2.4 Interface accuracy}\label{interface-accuracy}
 
 Interface accuracy was measured with DockQ v2.1.3 [14,15], run once
-per complex with an explicit identity chain mapping. Without one, DockQ
-optimises chain assignment and can swap the homologous TCR\ensuremath{\alpha} and TCR\ensuremath{\beta}
-chains, silently inflating scores. The primary reported quantity is
+per complex. The primary reported quantity is
 DockQ v2's Global DockQ, its interface-size weighted score over the
 whole complex; per-pairwise-interface DockQ values are also retained,
 giving 6 interfaces per class I complex and 10 per class II complex.
@@ -323,9 +321,9 @@ Standard CAPRI thresholds are used throughout (\textless{} 0.23
 incorrect, 0.23--0.49 acceptable, 0.49--0.80 medium, \ensuremath{\geq} 0.80 high)
 [16].
 
-Two TCR-specific metrics were computed on the same top-ranked
-predictions the DockQ workflow scores; predictions were never selected
-using a native RMSD. TCR\ensuremath{\alpha} and TCR\ensuremath{\beta} chains were annotated once per
+\subsection{2.5 CDR annotation}\label{cdr-annotation}
+
+TCR\ensuremath{\alpha} and TCR\ensuremath{\beta} chains were annotated once per
 biological sequence with ANARCI [17] under IMGT numbering [18],
 and the annotation propagated to prediction and native coordinates
 through pairwise sequence alignment rather than through PDB residue
@@ -333,7 +331,12 @@ numbering. CDR ranges were the inclusive IMGT intervals 27--38 (CDR1),
 56--65 (CDR2), 81--86 (CDR2.5) and 104--118 (CDR3); ``all CDRs'' means
 all four regions on both chains, eight in total.
 
-The first, the MHC-aligned weighted all-CDR C\ensuremath{\alpha} RMSD, follows the TCRdock
+\subsection{2.6 TCR-specific RMSD
+metrics}\label{tcr-specific-rmsd-metrics}
+
+Two TCR-specific metrics were computed on the same top-ranked
+predictions the DockQ workflow scores; predictions were never selected
+using a native RMSD. The first, the MHC-aligned weighted all-CDR C\ensuremath{\alpha} RMSD, follows the TCRdock
 formulation [7,19]. MHC residues are matched between prediction and
 native by sequence alignment; a single ordinary-least-squares Kabsch
 superposition of the class I peptide-binding platform (or, jointly, of
@@ -356,6 +359,9 @@ over the corresponding CDR3 loop without further alignment, comparing
 only identically named atoms in sequence-matched, identity-matched
 residues. C\ensuremath{\alpha}-only versions are retained as quality-control columns.
 
+\subsection{2.7 Metric validation and quality
+control}\label{metric-validation-and-quality-control}
+
 Every metric reports expected, matched and resolved residue counts, atom
 counts, coverage fraction and a pass/fail status; incomplete loops are
 kept separate from the complete-case analysis rather than silently
@@ -367,7 +373,7 @@ RMSDs near zero; that deforming a CDR3 loop raises its own
 framework-aligned RMSD; and that permuting chain identifiers changes
 nothing, because chain assignment is by sequence and biological role.
 
-\subsection{2.5 Confidence and reference-free quality
+\subsection{2.8 Confidence and reference-free quality
 scores}\label{confidence-and-reference-free-quality-scores}
 
 Each method's own interface confidence (ipTM, and pTM and mean pLDDT
@@ -381,7 +387,7 @@ targets whose PDB identifiers do not appear in its training set (n =
 pDockQ, CDR3\ensuremath{\alpha} pLDDT and the worst pairwise PAE from a single AlphaFold 3
 prediction.
 
-\subsection{2.6 Similarity to the pre-cutoff structural
+\subsection{2.9 Similarity to the pre-cutoff structural
 record}\label{similarity-to-the-pre-cutoff-structural-record}
 
 Because neither AlphaFold 3's nor Protenix's actual training list is
@@ -410,7 +416,7 @@ chain to come from one reference entry, and is the entry maximising mean
 identity across them. No benchmark entry appears in the reference set;
 all 136 were released on or after 13 October 2021.
 
-\subsection{2.7 Cross-model divergence}\label{cross-model-divergence}
+\subsection{2.10 Cross-model divergence}\label{cross-model-divergence}
 
 Because AlphaFold 3 and ESMFold2 predict the same FASTA with the same
 chain letters and 1..N residue numbering, their predictions correspond
@@ -425,7 +431,7 @@ frame and reports the rotation and centre-of-mass offset carrying
 AlphaFold 3's TCR onto ESMFold2's, with the TCR's own internal RMSD
 reported for contrast.
 
-\subsection{2.8 Sampler instrumentation and
+\subsection{2.11 Sampler instrumentation and
 timing}\label{sampler-instrumentation-and-timing}
 
 Both models' official samplers were patched observationally to retain
@@ -450,7 +456,7 @@ warm-up predictions run and discarded before timing. Instrumentation
 costs \textasciitilde2\% and was run as a separate pass, so the baseline
 track is stock AlphaFold 3.
 
-\subsection{2.9 Statistics and software}\label{statistics-and-software}
+\subsection{2.12 Statistics and software}\label{statistics-and-software}
 
 Paired method comparisons use the Wilcoxon signed-rank test on the
 complexes both methods predicted. Correlations are Pearson and Spearman
