@@ -6,4 +6,8 @@ Figure 2:
 
 DockQ graphs: DockQoverall vs iPTM graph, DockQ overall histogram, DockQ vs rresolution graph, class I vs class II graph
 
-Figure 3: 
+Figure 3:
+
+CDR lDDT: all-CDR lDDT with the whole complex vs the CDR's own TCR chain as contact
+partners, CDR3 pLDDT against the CDR3 lDDT achieved, and the pLDDT - lDDT gap by region
+(framework -> CDR3).   scripts/lddt.py -> outputs/Figure_lddt.png

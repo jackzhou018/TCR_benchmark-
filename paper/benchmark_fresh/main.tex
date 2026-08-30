@@ -238,7 +238,7 @@ No redundancy filter or resolution cut was applied to the primary set.
 TCR variable-domain identity is a poor novelty axis --- germline V-gene
 framework dominates a \textasciitilde110-residue V domain --- and
 filtering on it discards most of the set while retaining an
-idiosyncratic remainder (Section 3.9). Instead, similarity to the
+idiosyncratic remainder (Section 3.10). Instead, similarity to the
 pre-cutoff structural record is measured explicitly and treated as a
 covariate.
 
@@ -308,7 +308,7 @@ was therefore run on class I only, giving 111 predictions.
 
 Mean end-to-end runtimes were 5.2 s per complex for the ESMFold2 API
 (median, IQR 4.9--6.4 s) and 13.4 s per complex for a local AlphaFold 3
-run at default sampler settings on one RTX PRO 6000 (Section 2.10).
+run at default sampler settings on one RTX PRO 6000 (Section 2.11).
 
 \subsection{2.4 Interface accuracy}\label{interface-accuracy}
 
@@ -359,7 +359,32 @@ over the corresponding CDR3 loop without further alignment, comparing
 only identically named atoms in sequence-matched, identity-matched
 residues. C\ensuremath{\alpha}-only versions are retained as quality-control columns.
 
-\subsection{2.7 Metric validation and quality
+\subsection{2.7 Superposition-free CDR accuracy
+(lDDT)}\label{superposition-free-cdr-accuracy-lddt}
+
+Both metrics above answer their question through a superposition, and
+each superposition is a choice. The local distance difference test
+(lDDT) [23] removes that choice: a residue is scored by the fraction of
+its interatomic distances to the rest of the structure that the
+prediction reproduces, averaged over four tolerances (0.5, 1, 2 and
+4~\AA{}), counting only pairs closer than 15~\AA{} in the reference and
+excluding pairs within one residue. It needs no alignment and no
+reference frame, and it is bounded in [0, 1].
+
+lDDT was computed on C\ensuremath{\alpha} atoms, which is AlphaFold's own
+definition and requires no symmetric-side-chain correction; the all-atom
+view of the CDRs is already carried by the framework-aligned CDR3 RMSD.
+Residues were matched between prediction and native through the same
+manifest-sequence alignment, and the CDRs defined by the same ANARCI
+annotation, as the two RMSD metrics, so the residue sets behind the two
+families of number are identical. Every TCR region was scored twice,
+differing only in which atoms may act as contact partners: against every
+chain of the complex, which makes the score sensitive to where the TCR is
+docked, and against the CDR's own TCR chain alone, which removes the
+docking and leaves local loop geometry. Whole-chain, peptide, MHC and
+whole-complex lDDT are reported alongside for context.
+
+\subsection{2.8 Metric validation and quality
 control}\label{metric-validation-and-quality-control}
 
 Every metric reports expected, matched and resolved residue counts, atom
@@ -371,13 +396,25 @@ approximately zero; that displacing an intact TCR relative to a fixed
 MHC raises the MHC-aligned CDR RMSD while leaving framework-aligned CDR3
 RMSDs near zero; that deforming a CDR3 loop raises its own
 framework-aligned RMSD; and that permuting chain identifiers changes
-nothing, because chain assignment is by sequence and biological role.
+nothing, because chain assignment is by sequence and biological role. The
+lDDT implementation is checked against biotite's implementation of
+Mariani et al.~to within $10^{-6}$, returns 1 for a structure
+scored against itself and against a rigidly rotated and translated copy of
+itself, and is unaffected by rigid motion of a group lying outside the
+15~\AA{} inclusion radius.
 
-\subsection{2.8 Confidence and reference-free quality
+\subsection{2.9 Confidence and reference-free quality
 scores}\label{confidence-and-reference-free-quality-scores}
 
-Each method's own interface confidence (ipTM, and pTM and mean pLDDT
-where available) was taken from its output. pDockQ [20] was computed
+Each method's own interface confidence (ipTM, and pTM where available)
+was taken from its output. Per-residue predicted lDDT (pLDDT) was read
+from the B-factor column of the same top-ranked prediction file that was
+scored, averaged over a residue's non-hydrogen atoms and then over a
+region; all four methods write it on the 0--100 scale here, and anything
+reported in [0, 1] is rescaled. Confidence is therefore compared with
+accuracy residue-for-residue over exactly the residue sets of Section 2.7,
+and the calibration error reported is the mean of pLDDT − lDDT over
+complexes. pDockQ [20] was computed
 per interface from the predicted structure and per-residue confidence,
 and averaged per complex. A published random-forest quality-tier
 classifier for TCR--pMHC models [11] was re-implemented against this
@@ -385,7 +422,7 @@ benchmark's chain convention and scored on all 126 complexes; the subset
 of class I targets whose PDB identifiers do not appear in its training
 set (n = 27) is reported separately throughout.
 
-\subsection{2.9 A composite single-prediction confidence
+\subsection{2.10 A composite single-prediction confidence
 score}\label{a-composite-single-prediction-confidence-score}
 
 Each of the scores above summarises one aspect of a prediction. We
@@ -400,7 +437,7 @@ mean:
 the off-diagonal entries of AlphaFold 3's chain-pair ipTM and chain-pair
 minimum-PAE matrices, so the first and fourth terms are the weakest and
 the least certain chain relationship in the complex; pDockQ is the
-interface score of Section 2.8; and $\mathrm{pLDDT}_{\mathrm{CDR3}\alpha}$
+interface score of Section 2.9; and $\mathrm{pLDDT}_{\mathrm{CDR3}\alpha}$
 is the mean pLDDT of the CDR3\ensuremath{\alpha} loop, the region that has to be right for
 the TCR to dock correctly. Each term lies on the unit interval, so the
 geometric mean penalises a single weak term more than an arithmetic mean
@@ -413,7 +450,7 @@ which is what makes it usable prospectively. The formula was fixed on
 this benchmark and is therefore reported as a benchmark result, not as a
 validated external predictor.
 
-\subsection{2.10 Sampler instrumentation and
+\subsection{2.11 Sampler instrumentation and
 timing}\label{sampler-instrumentation-and-timing}
 
 Both models' official samplers were patched observationally to retain
@@ -438,7 +475,7 @@ warm-up predictions run and discarded before timing. Instrumentation
 costs \textasciitilde2\% and was run as a separate pass, so the baseline
 track is stock AlphaFold 3.
 
-\subsection{2.11 Statistics and software}\label{statistics-and-software}
+\subsection{2.12 Statistics and software}\label{statistics-and-software}
 
 Paired method comparisons use the Wilcoxon signed-rank test on the
 complexes both methods predicted. Correlations are Pearson and Spearman
@@ -607,8 +644,8 @@ the native and then measures all eight CDRs with CDR3 residues weighted
 3, so it reports docking accuracy. The framework-aligned metrics fit
 each TCR chain's variable-domain framework independently and then
 measure the CDR3 loop, so they report loop accuracy independent of
-docking. TCRmodel2 is scored on the 72 class I predictions that passed
-CDR annotation and coverage checks.}\tabularnewline
+docking. TCRmodel2 is scored on its 111 class I
+predictions.}\tabularnewline
 \toprule\noalign{}
 \begin{minipage}[b]{\linewidth}\raggedright
 Metric
@@ -640,28 +677,29 @@ TCRmodel2
 \bottomrule\noalign{}
 \endlastfoot
 MHC-aligned weighted all-CDR C\ensuremath{\alpha} RMSD & 2.84 (1.61-5.56) & 3.82
-(2.10-7.47) & 2.75 (1.60-5.24) & 3.53 (2.32-4.71) \\
+(2.10-7.47) & 2.75 (1.60-5.24) & 3.47 (1.99-5.16) \\
 Framework-aligned CDR3\ensuremath{\alpha} all-atom RMSD & 1.94 (1.35-2.88) & 2.33
-(1.53-3.08) & 1.81 (1.25-2.59) & 1.97 (1.48-2.96) \\
+(1.53-3.08) & 1.81 (1.25-2.59) & 2.02 (1.47-3.08) \\
 Framework-aligned CDR3\ensuremath{\beta} all-atom RMSD & 1.73 (1.17-2.49) & 1.93
-(1.40-2.60) & 1.56 (1.13-2.26) & 1.80 (1.42-2.61) \\
-\emph{n} complexes & 126 & 126 & 126 & 72 \\
+(1.40-2.60) & 1.56 (1.13-2.26) & 1.95 (1.42-2.70) \\
+\emph{n} complexes & 126 & 126 & 126 & 111 \\
 \end{longtable}
 
 The MHC-aligned weighted all-CDR C\ensuremath{\alpha} RMSD, which measures docking with no
 second fit, has a median of 2.75 \AA{} for ESMFold2, 2.84 \AA{} for AlphaFold 3
-and 3.82 \AA{} for Protenix over the 126 complexes, and 3.53 \AA{} for TCRmodel2
-over the 72 class I predictions that passed annotation and coverage
-checks. The distributions are strongly right-skewed --- means are 5.45,
-6.34, 4.83 and 7.72 \AA{} and maxima exceed 50 \AA{} --- confirming that the
+and 3.82 \AA{} for Protenix over the 126 complexes, and 3.47 \AA{} for TCRmodel2
+over its 111 class I predictions. The distributions are strongly
+right-skewed --- means are 5.45 (ESMFold2), 6.34 (AlphaFold 3), 7.72
+(Protenix) and 5.59 \AA{} (TCRmodel2), and every method's maximum exceeds
+50 \AA{} --- confirming that the
 aggregate is dominated by a minority of complexes in which the TCR is
 placed in an entirely wrong orientation, not by a uniform degradation.
 
 Framework-aligned CDR3 RMSD, which removes docking error by
 construction, is far more uniform across methods. Median CDR3\ensuremath{\alpha}
-all-heavy-atom RMSD is 1.81 \AA{} (ESMFold2), 1.94 \AA{} (AlphaFold 3), 1.97 \AA{}
-(TCRmodel2) and 2.33 \AA{} (Protenix); median CDR3\ensuremath{\beta} is 1.56, 1.73, 1.80 and
-1.93 \AA{}. The spread across methods for loop conformation (0.5 \AA{}) is an
+all-heavy-atom RMSD is 1.81 \AA{} (ESMFold2), 1.94 \AA{} (AlphaFold 3), 2.02 \AA{}
+(TCRmodel2) and 2.33 \AA{} (Protenix); median CDR3\ensuremath{\beta} is 1.56 \AA{} (ESMFold2),
+1.73 (AlphaFold 3), 1.93 (Protenix) and 1.95 (TCRmodel2). The spread across methods for loop conformation (0.5 \AA{}) is an
 order of magnitude smaller than the spread across complexes for docking
 (tens of \aa{}ngströms), and the maxima are bounded --- no method exceeds
 7.9 \AA{} on CDR3\ensuremath{\alpha} or CDR3\ensuremath{\beta}. In other words, all four methods build
@@ -673,16 +711,147 @@ unsolved, problems [12].
 Two secondary observations follow from Table 2. First, ESMFold2's
 advantage is concentrated in the CDR3\ensuremath{\beta} loop and in class II: its class
 II medians are 1.76 \AA{} (all-CDR), 1.82 \AA{} (CDR3\ensuremath{\alpha}) and 1.34 \AA{} (CDR3\ensuremath{\beta}),
-against AlphaFold 3's 2.37, 2.37 and 2.05 \AA{}. Second, TCRmodel2's class I
-all-CDR distribution is the \emph{tightest} of the four (mean 4.83 \AA{}, SD
-5.17 \AA{}, maximum 24.4 \AA{}, against AlphaFold 3's 6.18, 9.31 and 52.7 \AA{}):
-the TCR-specific model is worse on average but fails less
-catastrophically, which is what one expects from a method whose template
-search is restricted to TCR and MHC structures.
+against AlphaFold 3's 2.37, 2.37 and 2.05 \AA{}. Second, restricting a
+model's template search to TCR and MHC structures does not spare it the
+catastrophic failures. On the 111 class I complexes TCRmodel2's all-CDR
+distribution is less dispersed than AlphaFold 3's or Protenix's (SD
+7.59 \AA{} against 9.31 and 9.34) but not than ESMFold2's (7.03 \AA{}), and its
+maximum is the same 52.7 \AA{} as AlphaFold 3's. Its advantage over the
+general models is a lower mean (5.59 \AA{} against AlphaFold 3's 6.18 on the
+same complexes), not an absence of wrong orientations.
 
-\subsection{3.5 Effect of MHC class}\label{effect-of-mhc-class}
+\subsection{3.5 Superposition-free CDR accuracy and predicted local
+confidence}\label{superposition-free-cdr-accuracy-and-predicted-local-confidence}
 
-Class II is not harder than class I on this benchmark (Figure 3C).
+Both metrics of Section 3.4 answer their question through a
+superposition, and each superposition is a choice. lDDT [23] removes
+that choice: it scores a residue by how many of its interatomic distances
+to the rest of the structure the prediction reproduces, so it needs no
+alignment and no reference frame. It is also the quantity every one of
+these methods predicts per residue and reports as pLDDT, which makes it
+the one accuracy measure directly comparable with the models' own
+confidence. We computed C\ensuremath{\alpha} lDDT over the same eight CDR
+regions, on the same top-ranked predictions, with two contact sets: the
+whole complex, and the CDR's own TCR chain alone (Table 3, Figure 3).
+
+{\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}@{}}
+\caption{\textbf{CDR lDDT and pLDDT, median (IQR), class I and II
+pooled.} lDDT is superposition-free and bounded in [0, 1]; higher is
+better. ``Whole complex'' uses every chain as contact partners, so the
+score falls when the TCR is docked in the wrong place; ``own chain''
+restricts the partners to the TCR chain the loop sits on, which removes
+the docking. pLDDT is each method's own per-residue confidence over the same
+residues, rescaled to [0, 1].}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Region and contact set
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+AF3
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Protenix
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+ESMFold2
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+TCRmodel2
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Region and contact set
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+AF3
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Protenix
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+ESMFold2
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+TCRmodel2
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+All CDRs, complex & 0.866 (0.793--0.907) & 0.844 (0.784--0.891) & 0.872 (0.819--0.911) & 0.852 (0.806--0.893) \\
+All CDRs, own chain & 0.921 (0.884--0.948) & 0.916 (0.883--0.939) & 0.932 (0.894--0.956) & 0.920 (0.886--0.943) \\
+CDR3\ensuremath{\alpha}, complex & 0.824 (0.714--0.899) & 0.787 (0.720--0.870) & 0.835 (0.733--0.894) & 0.792 (0.735--0.881) \\
+CDR3\ensuremath{\beta}, complex & 0.842 (0.773--0.918) & 0.824 (0.745--0.898) & 0.849 (0.783--0.934) & 0.819 (0.769--0.890) \\
+Framework, complex & 0.961 (0.944--0.970) & 0.958 (0.948--0.969) & 0.960 (0.949--0.971) & 0.961 (0.948--0.971) \\
+Whole complex & 0.935 (0.914--0.957) & 0.931 (0.909--0.949) & 0.940 (0.922--0.955) & 0.942 (0.918--0.951) \\
+Mean CDR3 pLDDT & 0.874 (0.796--0.920) & 0.890 (0.840--0.939) & 0.784 (0.718--0.821) & 0.826 (0.783--0.865) \\
+\emph{n} complexes & 126 & 126 & 126 & 111 \\
+\end{longtable}
+}
+
+Within a method, all-CDR lDDT in the whole-complex frame is very nearly a
+restatement of docking quality: it correlates with Global DockQ at
+Pearson r = 0.934 (AlphaFold 3), 0.915 (ESMFold2), 0.907 (Protenix) and
+0.904 (TCRmodel2), and with the MHC-aligned weighted all-CDR RMSD of
+Section 3.4 at Spearman \ensuremath{\rho} = −0.911, −0.897, −0.887 and
+−0.827. Between methods it says much less. The four medians span 0.844 to
+0.872 --- a range of 0.028 --- for CDRs whose MHC-aligned RMSD medians
+span 2.75 to 3.82 \AA{}. lDDT is local and bounded, and a TCR placed in an
+entirely wrong orientation keeps most of the interatomic distances within
+its own chains, so the catastrophic minority that dominates the RMSD
+means is compressed into the lower whisker of Figure 3A rather than
+allowed to run to 50 \AA{}. lDDT therefore ranks complexes well and
+separates methods poorly, and the two should not be substituted for one
+another.
+
+Restricting the contact set to the CDR's own TCR chain reproduces
+Section 3.4's conclusion without any superposition at all. All-CDR lDDT
+rises to 0.916--0.932, a spread of 0.016 across four methods, and its
+correlation with Global DockQ falls from about 0.91 to 0.680 (AlphaFold
+3), 0.674 (ESMFold2), 0.600 (TCRmodel2) and 0.557 (Protenix). The loops
+are built to nearly the same local standard everywhere; what differs is
+where they are put.
+
+pLDDT ranks CDR3 accuracy better than any of the global confidence scores
+rank whole-complex accuracy. Pooling CDR3\ensuremath{\alpha} and
+CDR3\ensuremath{\beta}, Pearson r between mean CDR3 pLDDT and CDR3 lDDT is
+0.837 for ESMFold2, 0.750 for Protenix, 0.728 for TCRmodel2 and 0.724 for
+AlphaFold 3 --- the same ordering, and for ESMFold2 a higher value, than
+the ipTM correlations of Section 3.8. Its \emph{calibration}, however,
+changes sign across the variable domain (Figure 3C). AlphaFold 3,
+Protenix and TCRmodel2 understate the framework (mean pLDDT − lDDT =
+−0.027, −0.007 and +0.004) and overstate CDR3 (+0.035, +0.084 and
++0.011); Protenix is the most overconfident loop-builder of the four, and
+the only method whose CDR3 pLDDT exceeds even its own-chain CDR3 lDDT.
+ESMFold2 is uniformly conservative --- −0.100 on the framework rising to
+−0.058 on CDR3 --- which is the per-residue counterpart of the ipTM
+intercept in Section 3.8: its confidence is on a lower scale but better
+ordered. Measured against the own-chain lDDT instead, every method is
+underconfident on CDR3 (−0.035, +0.005, −0.125 and −0.060). Predicted
+lDDT therefore sits between the loop's local quality and the quality it
+achieves once docked: the confidence head anticipates part of the docking
+error, but not the part that matters.
+
+\begin{figure}
+\centering
+\includegraphics[width=1\linewidth,height=\textheight,keepaspectratio,alt={Superposition-free CDR accuracy and the models' own confidence. (A) All-CDR C-alpha lDDT with the whole complex as contact partners and with the CDR's own TCR chain only. (B) Mean CDR3 pLDDT against the CDR3 lDDT achieved, CDR3-alpha and CDR3-beta pooled, with per-method linear fits and Pearson r; the dashed line is perfect calibration. (C) Mean pLDDT minus lDDT by region, framework through CDR3.}]{Figure_lddt.png}
+\caption{\textbf{Superposition-free CDR accuracy and the models' own
+confidence.} (\textbf{A}) All-CDR C\ensuremath{\alpha} lDDT with the whole
+complex as contact partners (dark) and with the CDR's own TCR chain only
+(pale). Removing the docking raises every method by a similar amount and
+compresses the differences between them. (\textbf{B}) Mean CDR3 pLDDT
+against the CDR3 lDDT actually achieved, CDR3\ensuremath{\alpha} and
+CDR3\ensuremath{\beta} pooled, with per-method linear fits and Pearson
+\emph{r}; the dashed line is perfect calibration. (\textbf{C}) Mean
+pLDDT − lDDT by region. Three of the four methods cross from understating
+the framework to overstating CDR3; ESMFold2 is conservative
+everywhere.}
+\end{figure}
+
+\subsection{3.6 Effect of MHC class}\label{effect-of-mhc-class}
+
+Class II is not harder than class I on this benchmark (Figure 4C).
 Median Global DockQ for class II versus class I is 0.752 versus 0.750
 (AlphaFold 3), 0.742 versus 0.736 (ESMFold2) and 0.713 versus 0.698
 (Protenix); every difference is well inside the spread, and the class II
@@ -692,11 +861,11 @@ II complexes, this benchmark cannot resolve a class effect of the size
 other studies report, and the TCRmodel2 comparison is class I only by
 construction.
 
-\subsection{3.6 Effect of reference
+\subsection{3.7 Effect of reference
 resolution}\label{effect-of-reference-resolution}
 
 Accuracy declines with worsening reference resolution for every method,
-but not equally (Figure 3B). Pearson r between resolution and Global
+but not equally (Figure 4B). Pearson r between resolution and Global
 DockQ is \ensuremath{-}0.292 for AlphaFold 3 (p = 0.001), \ensuremath{-}0.266 for ESMFold2 (p =
 0.003), \ensuremath{-}0.238 for TCRmodel2 (p = 0.012) and \ensuremath{-}0.184 for Protenix (p =
 0.040, Spearman p = 0.065, not significant). Part of this is unavoidable
@@ -706,11 +875,11 @@ quality are the two most accurate ones, which is what one expects if the
 residual error in the best models is approaching the coordinate
 uncertainty of the references themselves.
 
-\subsection{3.7 Confidence calibration and reference-free quality
+\subsection{3.8 Confidence calibration and reference-free quality
 scores}\label{confidence-calibration-and-reference-free-quality-scores}
 
 Interface confidence predicts accuracy for all three general methods,
-but ESMFold2's ipTM does so substantially better (Figure 3A). Pearson r
+but ESMFold2's ipTM does so substantially better (Figure 4A). Pearson r
 between ipTM and Global DockQ is 0.793 for ESMFold2 (Spearman \ensuremath{\rho} =
 0.777), against 0.660 for AlphaFold 3 (\ensuremath{\rho} = 0.654) and 0.657 for Protenix
 (\ensuremath{\rho} = 0.679). The regression lines also differ in intercept: ESMFold2
@@ -731,19 +900,19 @@ reference. (\textbf{C}) Global DockQ by MHC class. Shaded bands are the
 CAPRI quality classes.}
 \end{figure}
 
-\subsection{3.8 A composite single-prediction score beats the published
+\subsection{3.9 A composite single-prediction score beats the published
 classifier}\label{a-composite-single-prediction-score-beats-the-published-classifier}
 
 For AlphaFold 3 specifically, single global confidence scores leave
 accuracy on the table. Replacing ipTM with the weakest \emph{pairwise}
 ipTM already raises Pearson r from 0.660 to 0.695 over all 126
-complexes, and the four-term composite of Section 2.9 --- computed from
+complexes, and the four-term composite of Section 2.10 --- computed from
 one AlphaFold 3 prediction, with no second structure and no reference
 --- reaches r = 0.712 (95\% CI 0.617--0.791) and \ensuremath{\rho} = 0.725
-(0.624--0.803) (Figure 4A).
+(0.624--0.803) (Figure 5A).
 
 It is the best of the scores available for an AlphaFold 3 prediction
-(Figure 4B). On the same 126 complexes the published random-forest quality-tier
+(Figure 5B). On the same 126 complexes the published random-forest quality-tier
 classifier [11] reaches r = 0.662 (\ensuremath{\rho} = 0.674), AlphaFold 3's own ipTM
 0.660 (0.654) and pDockQ 0.660 (0.679) --- that is, the classifier does
 no better than the two confidence scores it was built to improve on. The
@@ -768,7 +937,7 @@ benchmark, and 27 unseen targets cannot separate it from the classifier;
 we therefore do not claim a resolved advantage for any single-model
 score on unseen targets. And all of these scores --- learned or not ---
 are beaten by a quantity that needs no quality model at all
-(Section 3.10).
+(Section 3.11).
 
 \begin{figure}
 \centering
@@ -782,7 +951,7 @@ prediction, over all 126 complexes;
 whiskers are 95\% bootstrap intervals.}
 \end{figure}
 
-\subsection{3.9 Effect of similarity to pre-cutoff
+\subsection{3.10 Effect of similarity to pre-cutoff
 structures}\label{effect-of-similarity-to-pre-cutoff-structures}
 
 Accuracy rises weakly but significantly with similarity to the
@@ -822,7 +991,7 @@ benchmark on a TCR-identity filter: only 7 of 126 targets fall below
 70\% identity, and those 7 are not ``hard targets'' but mostly unusual
 or non-human TCRs.
 
-\subsection{3.10 Structural divergence between AlphaFold 3 and
+\subsection{3.11 Structural divergence between AlphaFold 3 and
 ESMFold2}\label{structural-divergence-between-alphafold-3-and-esmfold2}
 
 Equal accuracy is not the same as equal predictions. Across the 126
@@ -880,24 +1049,24 @@ not a failure to recognise the correct one --- a caveat that applies to
 any truncated-input benchmark, and one ESMFold2 appears not to share.
 
 That disagreement is a strong, entirely reference-free predictor of
-accuracy (Figure 5A). Cross-model C\ensuremath{\alpha} RMSD correlates with AlphaFold 3's
+accuracy (Figure 6A). Cross-model C\ensuremath{\alpha} RMSD correlates with AlphaFold 3's
 Global DockQ at Spearman \ensuremath{\rho} = \ensuremath{-}0.756 and with ESMFold2's at \ensuremath{\rho} = \ensuremath{-}0.670,
 and with the \emph{worse} of the two at \ensuremath{\rho} = \ensuremath{-}0.884 (p = 1.1 \ensuremath{\times} 10\ensuremath{^{-}}\ensuremath{^{4}}\ensuremath{^{2}}).
 For comparison, on the same 126 complexes AlphaFold 3's own ipTM
 predicts that worse-of-two value at \ensuremath{\rho} = +0.604 and ESMFold2's at \ensuremath{\rho} =
 +0.639. Cross-architecture agreement is therefore a better native-free
 quality signal than either model's internal confidence, than pDockQ, and
-than the composite and random-forest scores of Section 3.8 --- and it
+than the composite and random-forest scores of Section 3.9 --- and it
 requires no confidence head, no training, and no calibration.
 
-By divergence quartile (Figure 5B), median Global DockQ falls from 0.860
+By divergence quartile (Figure 6B), median Global DockQ falls from 0.860
 (AlphaFold 3) and 0.862 (ESMFold2) in the most-agreeing quartile to
 0.518 and 0.564 in the most-divergent one. Notably, the two models
 mostly fail on the \emph{same} complexes: both quartile trends are
 parallel, and among the 20 most divergent complexes, 4 are failed by
 both at the medium threshold while 12 are solved by exactly one.
 
-The residual complementarity is nonetheless substantial (Figure 5C). At
+The residual complementarity is nonetheless substantial (Figure 6C). At
 DockQ \ensuremath{\geq} 0.49, AlphaFold 3 succeeds on 107 of 126 complexes and ESMFold2
 on 115; the two together succeed on 119 (103 both, 4 AlphaFold 3 only,
 12 ESMFold2 only, 7 neither). Pooling an MSA-based and a
@@ -928,11 +1097,11 @@ divergence; the two methods degrade together. (\textbf{C}) Complexes
 reaching medium-or-better accuracy: individually, jointly, and neither.}
 \end{figure}
 
-\subsection{3.11 Denoising trajectories of the two
+\subsection{3.12 Denoising trajectories of the two
 samplers}\label{denoising-trajectories-of-the-two-samplers}
 
 Instrumenting both diffusion samplers on the same complexes shows that
-the equality of outcome conceals very different dynamics (Figure 6A).
+the equality of outcome conceals very different dynamics (Figure 7A).
 AlphaFold 3 begins denoising from an initial noise scale of
 \textasciitilde2,560 \AA{} and is still \textasciitilde44 \AA{} from the native
 at the midpoint of its 200-step schedule; ESMFold2 begins at
@@ -944,7 +1113,7 @@ AlphaFold 3 spends most of its schedule in a regime where, at the scale
 the noise schedule sets, no structure has settled at all; ESMFold2
 commits early and refines.
 
-The same behaviour at scale (Figure 6B, 30 complexes \ensuremath{\times} 5 samples =
+The same behaviour at scale (Figure 7B, 30 complexes \ensuremath{\times} 5 samples =
 30,000 recorded frames) puts AlphaFold 3's convergence in a narrow
 window. Mean C\ensuremath{\alpha} RMSD to the final frame of the same sample falls below
 2.0 \AA{} at step 150 and below 1.0 \AA{} at step 158; every complex is within
@@ -955,12 +1124,12 @@ For roughly the first 140 steps the state is noise at the scale the
 schedule sets --- AlphaFold 3's schedule holds \ensuremath{\sigma} above 5 \AA{} until
 \textasciitilde70\% of the way through.
 
-\subsection{3.12 Effect of AlphaFold 3 sampler settings on accuracy and
+\subsection{3.13 Effect of AlphaFold 3 sampler settings on accuracy and
 runtime}\label{effect-of-alphafold-3-sampler-settings-on-accuracy-and-runtime}
 
 If the trajectory has effectively converged by step \textasciitilde160,
 the last 40 steps and the four extra diffusion samples should be nearly
-free to remove. They are (Figure 6C, Table 3). Over the same 30
+free to remove. They are (Figure 7C, Table 4). Over the same 30
 complexes, same MSAs, same seeds, run serially on one idle GPU:
 
 \begin{longtable}[]{@{}
@@ -1133,7 +1302,7 @@ scales roughly quadratically in the pair track while diffusion scales
 with atom count --- so the 1.9\ensuremath{\times} ceiling moves. Within this regime,
 though, the finding is straightforward: for high-throughput TCR--pMHC
 screening the default settings buy almost nothing, and the compute is
-better spent on a second architecture, which Section 3.10 shows is worth
+better spent on a second architecture, which Section 3.11 shows is worth
 considerably more than a fifth diffusion sample.
 
 \subsection{4.5 Implications for benchmark
@@ -1177,10 +1346,10 @@ non-TCR structures the models also saw. The reference set for that
 analysis is only as complete as TCR3d \ensuremath{\cup} STCRDab. AlphaFold 3 and
 Protenix were run through public servers, so their exact data pipelines
 are outside our control; ESMFold2 was likewise run through the ESM SDK
-API, and the trajectory analysis of Section 3.11 used the local
+API, and the trajectory analysis of Section 3.12 used the local
 \texttt{biohub/ESMFold2} checkpoint rather than the API model, so its
 per-frame DockQ values are not interchangeable with the benchmark's. The
-composite confidence score of Section 3.8 was developed on this
+composite confidence score of Section 3.9 was developed on this
 benchmark and requires independent validation. Finally, the
 sampler-economy result is a single-seed, single-GPU, 30-complex
 experiment in one size regime, as stated above.
@@ -1212,9 +1381,10 @@ manifest, all predictions, and the complete scoring, analysis and figure
 code are contained in the accompanying repository. Per-interface DockQ
 results are provided in long format (one row per interface plus Global
 DockQ), TCR CDR RMSD results per prediction with full coverage and
-quality-control columns, the sampler-economy tracks with per-complex
+quality-control columns, CDR lDDT and pLDDT in long format (one row per
+prediction and region, both contact sets), the sampler-economy tracks with per-complex
 timings and paired differences, and the per-structure confidence features
-and bootstrap intervals behind the composite score of Section 2.9. All analyses are reproducible from the
+and bootstrap intervals behind the composite score of Section 2.10. All analyses are reproducible from the
 recorded commands; software versions and model checkpoint revisions and
 hashes are recorded in the accompanying manifests.
 
@@ -1317,6 +1487,11 @@ hashes are recorded in the accompanying manifests.
 \item
   Protenix: an open reproduction of the AlphaFold 3 architecture
   (ByteDance AML AI4Science), run through the public Protenix server.
+\item
+  Mariani V, Biasini M, Barbato A, Schwede T. lDDT: a local
+  superposition-free score for comparing protein structures and models
+  using distance difference tests. \emph{Bioinformatics}
+  2013;29(21):2722--2728. doi:10.1093/bioinformatics/btt473
 \end{enumerate}
 
 \end{document}
