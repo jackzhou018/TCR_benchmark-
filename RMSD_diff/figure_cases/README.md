@@ -35,3 +35,20 @@ peptide-centre axis; native class I is never below +14 Å.
 In all four the fold is not the problem: TCR internal RMSD 0.49–1.73 Å, peptide conformation
 0.19–1.25 Å. Neither model's ipTM separates its own failures (0.52–0.59 for AF3 whether it is
 right or wrong).
+
+## Views
+
+`make_views.py` writes `<PDB>/<PDB>.pml`; run `pymol 8RYO/8RYO.pml`. It loads all three
+structures, colours them native gray / AF3 firebrick / ESMFold2 teal, and stores three scenes.
+All four cases use the same construction, so the panels are directly comparable: **screen up =
+MHC centre → native TCR centre, screen right = peptide N→C**. The native TCR is therefore
+straight up in every panel and a prediction that docks elsewhere is off-axis by construction.
+
+| scene | camera | use it for |
+|---|---|---|
+| `side` | across the groove | a TCR that moved to another surface — 8RYO |
+| `top` | down the platform normal, from the TCR side | context |
+| `footprint` | `top` with the TCR bodies hidden, one sphere per variable domain (big = Vα, small = Vβ) | a TCR that stayed on the groove and turned around — 9NW2, 9RU5, 9GV7 |
+
+The `footprint` scene exists because an in-plane flip is invisible in `side` (the two TCRs
+occupy the same envelope) and occluded in `top` (the TCR body covers the groove).
