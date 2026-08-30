@@ -516,8 +516,9 @@ on its class I subset (all p \textgreater{} 0.23).
 The CAPRI-class view (Figure 2B) tells the same story with a different
 emphasis. No method produced an incorrect model. ESMFold2 placed the
 largest fraction in the medium-or-better band (91.3\%: 54.0\% medium,
-37.3\% high), followed by TCRmodel2 (88.3\%), AlphaFold 3 (84.9\%:
-50.0\% medium, 34.9\% high) and Protenix (79.4\%). AlphaFold 3's
+37.3\% high), followed by TCRmodel2 (88.3\%: 60.4\% medium, 27.9\%
+high), AlphaFold 3 (84.9\%: 50.0\% medium, 34.9\% high) and Protenix
+(79.4\%: 54.0\% medium, 25.4\% high). AlphaFold 3's
 slightly higher median therefore coexists with a slightly heavier
 acceptable-only tail than ESMFold2's --- the two distributions cross.
 
@@ -527,13 +528,14 @@ AlphaFold 3 on post-cutoff TCR--pMHC complexes.
 
 \begin{figure}
 \centering
-\includegraphics[width=1\linewidth,height=\textheight,keepaspectratio,alt={Interface accuracy on 126 post-cutoff TCR--pMHC complexes. (A) Distribution of Global DockQ per method; box, IQR and median; dots, individual complexes; dashed lines, CAPRI thresholds. TCRmodel2 covers the 111 class I complexes only. (B) The same data as CAPRI classes. No method produced an incorrect model of any complex.}]{Figure_accuracy.png}
+\includegraphics[width=1\linewidth,height=\textheight,keepaspectratio,alt={Interface accuracy on 126 post-cutoff TCR--pMHC complexes. (A) Distribution of Global DockQ per method; box, IQR and median; dots, individual complexes; dashed lines, CAPRI thresholds. (B) The same data as CAPRI classes, as a percentage of each method's own set. No method produced an incorrect model of any complex. TCRmodel2 covers the 111 class I complexes only, in both panels.}]{Figure_accuracy.png}
 \caption{\textbf{Interface accuracy on 126 post-cutoff TCR--pMHC
 complexes.} (\textbf{A}) Distribution of Global DockQ per method; box,
 IQR and median; dots, individual complexes; dashed lines, CAPRI
-thresholds. TCRmodel2 covers the 111 class I complexes only.
-(\textbf{B}) The same data as CAPRI classes. No method produced an
-incorrect model of any complex.}
+thresholds. (\textbf{B}) The same data as CAPRI classes, as a percentage
+of each method's own set. No method produced an incorrect model of any
+complex. TCRmodel2 covers the 111 class I complexes only, in both
+panels.}
 \end{figure}
 
 \subsection{3.3 Accuracy by interface}\label{accuracy-by-interface}

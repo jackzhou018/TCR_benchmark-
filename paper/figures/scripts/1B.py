@@ -12,6 +12,10 @@ from matplotlib.patches import Patch
 
 from style import MODELS, keep, load_dockq, global_dockq
 
+# Same column order as 1A. TCRmodel2 is class I only, so its bar is over 111 structures,
+# not 126 -- the n above each bar says so.
+PANEL_MODELS = MODELS + ["TCRmodel2"]
+
 BASE = "/14TBDrive/6TBDrive1_backup/benchmark_fresh"
 OUT = f"{BASE}/paper/figures/outputs"
 
@@ -26,7 +30,7 @@ plt.rcParams.update({"font.size": 13, "axes.labelsize": 14,
                      "savefig.dpi": 200, "figure.dpi": 200})
 
 d = global_dockq(keep(load_dockq()))
-models = [m for m in MODELS if (d.model == m).any()]
+models = [m for m in PANEL_MODELS if (d.model == m).any()]
 
 fig, ax = plt.subplots(figsize=(6.6, 7.0))
 x = np.arange(len(models))

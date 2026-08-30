@@ -11,7 +11,7 @@ import pandas as pd
 MODELS = ["AF3", "Protenix", "ESMFold2"]
 BASE_COLORS = {"AF3": "#4169E1", "Protenix": "#E8871A", "ESMFold2": "#2E9B45",
                "TCRmodel2": "#D62728"}
-# TCRmodel2 is deliberately NOT in MODELS: only 1A plots it so far. Its completed
+# TCRmodel2 is deliberately NOT in MODELS: 1A and 1B append it themselves. Its completed
 # runnable Class I set contributes 111 of the 126 signed-off, scoreable structures
 # (9J4S has no scoreable native interface); the colour lives here so 1A shares the palette.
 
