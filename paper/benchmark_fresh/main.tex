@@ -182,12 +182,17 @@ recognition --- antibody--antigen and TCR--pMHC complexes in particular
 Structure Module with a diffusion head and reported substantially
 improved interface accuracy across biomolecular space [21], and
 TCR-specific adaptations such as TCRdock [22] and TCRmodel2 [23]
-narrowed the gap for this class of complex specifically. In parallel,
-protein language models made structure prediction possible without an
-MSA at all: ESMFold demonstrated that a sufficiently large language
-model encodes atomic-level structure in its representations [24],
-trading evolutionary coupling signal for a learned prior and an
-order-of-magnitude speed-up.
+narrowed the gap for this class of complex specifically. In parallel, a
+third line of work made structure prediction possible without an MSA at
+all: ESMFold demonstrated that a sufficiently large language model
+encodes atomic-level structure in its representations [24], trading
+evolutionary coupling signal for a learned prior and an
+order-of-magnitude speed-up. That exchange has so far been understood as
+a trade --- single-sequence predictors bought speed and paid accuracy,
+and on immune complexes specifically they paid a great deal of it.
+Whether the alignment is still doing indispensable work, or has become a
+component that a large enough language model can replace outright, is
+the question this benchmark was built to answer.
 
 Recent TCR--pMHC benchmarks have converged on a consistent ranking. Lu
 et al. evaluated thirteen methods on 70 post-cutoff complexes and
@@ -205,11 +210,16 @@ gains for antibody--peptide complexes [28]. Together these establish
 the field's working assumption: evolutionary information is what makes
 TCR--pMHC prediction work.
 
-Two considerations motivate re-examining that conclusion. First, the PLM
-predictors in those comparisons are predominantly ESMFold-generation
-models whose structure module is a direct AlphaFold-2 descendant,
-whereas a current-generation language-model predictor with a diffusion
-structure head is a substantially different architecture. Second, a
+Two considerations motivate re-examining that conclusion. First, that
+consensus was established against a specific and now superseded
+generation of single-sequence predictor: the PLM entries in those
+comparisons are predominantly ESMFold-generation models whose structure
+module is a direct AlphaFold-2 descendant, and which handle multi-chain
+inputs by concatenating the chains through a poly-glycine linker rather
+than modelling them as a complex at all. A current-generation
+language-model predictor that pairs a much larger language model with a
+diffusion structure head is a substantially different architecture, and
+the published ranking does not speak to it. Second, a
 benchmark that ranks methods addresses only part of the question. Where
 two architectures that share little on the conditioning side --- one
 using a paired MSA and structural templates, the other only the query
@@ -1257,8 +1267,28 @@ structure module descends from AlphaFold 2, whereas ESMFold2 pairs a
 most informative data point in Lu et al.~is that their best-performing
 PLM method was the one built on an AlphaFold-3-style architecture
 [25]; the present result is the same observation with the
-architecture gap closed further. Why this should hold for this problem
-in particular is worth stating explicitly: TCR variable domains and MHC
+architecture gap closed further.
+
+Four further observations in this benchmark point the same way, and none
+of them is a DockQ median. ESMFold2's confidence is the best calibrated
+of the four methods (ipTM against Global DockQ, Pearson r = 0.793 versus
+0.660 for AlphaFold 3), so the MSA-free model is not merely as accurate
+but better at knowing when it is right. Its strongest subgroup is class
+II (mean Global DockQ 0.743), the setting in which paired alignments are
+hardest to build. It is the only method that does not mistake the
+exposed \ensuremath{\beta}-sheet floor left by domain truncation for a docking surface,
+scoring 0.91, 0.53 and 0.63 on the three complexes where AlphaFold 3
+scores 0.28, 0.24 and 0.31. And it returns all of this in 5.2 s per
+complex against 13.4 s, with no alignment database, no homology search
+and no template lookup anywhere in the loop --- the stage that dominates
+wall-clock time at repertoire scale, and the one that cannot be run at
+all for a synthetic or heavily engineered receptor with no natural
+homologues. On this benchmark the absence of an MSA is not a handicap
+accepted in exchange for speed: it costs nothing measurable and removes
+the pipeline's least tractable dependency.
+
+Why this should hold for this problem in particular is worth stating
+explicitly: TCR variable domains and MHC
 platforms are among the most heavily sequenced and most heavily
 crystallised folds in existence, so an MSA adds little that a large
 language model has not already internalised, whereas the quantity an MSA
@@ -1375,8 +1405,19 @@ experiment in one size regime, as stated above.
 On 126 TCR--pMHC complexes released after the shared 30 September 2021
 training cutoff, a single-sequence protein-language-model diffusion
 predictor matched AlphaFold 3 and beat an AlphaFold 3 reproduction, with
-no MSA and no structural template. Both, and a TCR-specialised AlphaFold
-2 derivative, build the pMHC and the CDR3 loops to comparable accuracy
+no MSA and no structural template. That reverses the standing conclusion
+of the recent benchmarks of this class of complex [25,26], and it does so
+without a compensating caveat: ESMFold2 was simultaneously
+indistinguishable from AlphaFold 3 on median accuracy, ahead of it on the
+fraction of
+medium-or-better models, better calibrated in its own confidence, and
+roughly two and a half times faster end to end. The evolutionary signal
+carried by a paired alignment, long treated as the ingredient that makes
+TCR--pMHC modelling work, is on this evidence recoverable from a
+sufficiently large language model --- a change in what these predictors
+require, not only in how well they perform. Both models, and a
+TCR-specialised AlphaFold 2 derivative, build the pMHC and the CDR3 loops
+to comparable accuracy
 and differ almost entirely in where they place the TCR. The disagreement
 between the two architectures is anatomically confined to that
 placement, and predicts accuracy better than any of the confidence
