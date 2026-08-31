@@ -1,4 +1,4 @@
-"""Side-by-side composites: Figure_accuracy (1A|1B) and Figure_determinants (2A|2B|2C).
+"""Side-by-side composites: Figure_accuracy (1A|1B) and Figure_determinants (2A|2C).
 
 Panels are padded to a common height, never rescaled, so text is the same size in
 every panel of a figure -- which is only true because the panel scripts already
@@ -9,7 +9,8 @@ from PIL import Image
 OUT = "/14TBDrive/6TBDrive1_backup/benchmark_fresh/paper/figures/outputs"
 GAP = 40
 FIGS = {"Figure_accuracy": ["Figure_1A", "Figure_1B"],
-        "Figure_determinants": ["Figure_2A", "Figure_2B", "Figure_2C"]}
+        # 2B (resolution) moved to Figure 6
+        "Figure_determinants": ["Figure_2A", "Figure_2C"]}
 
 for name, panels in FIGS.items():
     ims = [Image.open(f"{OUT}/{p}.png").convert("RGB") for p in panels]
