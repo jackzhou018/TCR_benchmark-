@@ -114,52 +114,52 @@ guide practitioners in selecting the right models and settings for TCR-pMHC pred
 \section{1 Introduction}\label{introduction}
 
 T cell are crucial to adaptive immunity by performing various functions involving the 
-recognition of foreign antigens. This recognition is mediated by T cell receptors (TCRs) 
+recognition of foreign antigens {[}1,2{]}. This recognition is mediated by T cell receptors (TCRs) 
 which bind to certain peptide-major histocompatibility complex (pMHC) molecules 
-presented on the surface of target cells. The specificity of TCR-pMHC interactions 
-is determined by the structural complementarity between the TCR and the pMHC.
+presented on the surface of target cells {[}3,4{]}. The specificity of TCR-pMHC interactions 
+is determined by the structural complementarity between the TCR and the pMHC {[}5--8{]}.
 Thus, understanding the structural basis of TCR-pMHC interactions is essential for 
 various downstream applications such as epitope-specificity prediction, TCR
-engineering, or immunotherapeutic design {[}1--3{]}.
-Unfortunately, experimental determination of TCR-pMHC complexes 
-remains slow relative to the size of the repertoire, so
+engineering, or immunotherapeutic design {[}9--11{]}.
+Unfortunately, experimental determination of TCR-pMHC complexes {[}12--14{]}
+remains slow relative to the size of the repertoire {[}15--18{]}, so
 computational modelling has become the practical route to structural
 hypotheses at scale. 
 
 Deep-learning structure prediction has transformed this problem twice.
 AlphaFold 2 made substantial improvements in single-chain and many multi-chain 
-predictions {[}4{]}, though early benchmarks identified adaptive immune
-recognition, inluding TCR--pMHC complexes,as a point of weakness {[}5{]}. 
+predictions {[}19,20{]}, though early benchmarks identified adaptive immune
+recognition, inluding TCR--pMHC complexes,as a point of weakness {[}21{]}. 
 AlphaFold 3 replaced the structure Module with a diffusion head, substantially
-improving the interface accuracy across biomolecular space {[}6{]}, and
-TCR-specific adaptations such as TCRdock {[}7{]} and TCRmodel2 {[}8{]}
+improving the interface accuracy across biomolecular space {[}22{]}, and
+TCR-specific adaptations such as TCRdock {[}23{]} and TCRmodel2 {[}24{]}
 narrowed the gap for this class of complex specifically. These structure 
 prediction models rely heavily on multiple sequence alignments (MSAs) and 
 structural templates—data inputs derived from previously solved structures 
-that guide the prediction process using coevolutionary information. However, protein language models have made 
+that guide the prediction process using coevolutionary information {[}25{]}. However, protein language models have made 
 structure prediction possible without relying on MSAs. ESMFold demonstrated 
 that a sufficiently large language model can encode atomic-level structural 
-information within its representations [9], replacing evolutionary 
+information within its representations {[}26{]}, replacing evolutionary 
 coupling signals with a learned prior to achieve an order-of-magnitude speedup.
 Although ESMFold was accurate for many single-chained proteins, it was far less
-accurate on complex multi-chain structures, including TCR--pMHC complexes. 
+accurate on complex multi-chain structures, including TCR--pMHC complexes {[}27,28{]}. 
 The more recent ESMFold2, a successor to ESMFold, tries to improve on this issue
 by incorporating a diffusion module as its structure decoder to better sample
-a more diverse set of geometrically plausible docking configurations. 
+a more diverse set of geometrically plausible docking configurations {[}29{]}. 
 
 
 Recent TCR--pMHC benchmarks have converged on a consistent ranking. Recent studies
 have shown thatMSA-based methods, particularly AlphaFold3,
 consistently outperform all alternatives, with most PLM-based models
 underperforming except a PLM variant built on an AlphaFold-3-style
-architecture {[}10{]}. Ascunce-París et al.~reached the same conclusion
+architecture {[}27{]}. Ascunce-París et al.~reached the same conclusion
 on 265 class I complexes, reporting AlphaFold 3 as the best generaliser
-to post-training structures {[}11{]}. Shi et al.~found that TCR-specific
+to post-training structures {[}30{]}. Shi et al.~found that TCR-specific
 tools derived from AlphaFold 2 gain interface accuracy at the cost of
 framework accuracy, and that CDR3 loops, docking orientation and class
-II MHC--peptide interfaces remain difficult for every method {[}12{]}.
+II MHC--peptide interfaces remain difficult for every method {[}28{]}.
 Yin et al.~observed complementary behaviour between methods and pooling
-gains for antibody--peptide complexes {[}13{]}. Together these establish
+gains for antibody--peptide complexes {[}31{]}. Together these establish
 the field's working assumption: evolutionary information is what makes
 TCR--pMHC prediction work.
 
@@ -170,16 +170,16 @@ whereas a current-generation language-model predictor with a diffusion
 structure head is a substantially different architecture. Second, a
 benchmark that ranks methods addresses treats them as black boxes wherein
 the internal mechanisms that lead to the result are not considered. With the
-increase in use of diffusion-based models, it is becoming easier to
+increase in use of diffusion-based models {[}32,33{]}, it is becoming easier to
 evaluate the internal trajectories of these models; following these trajectiories
 can provide insight the sources of disagreements between models and reveal places
 to cut computational cost without sacrificing accuracy.
 
 To explore these ideas, we assembled a benchmark of 126 TCR--pMHC post-training 
 cutoff entries. Every method is scored against the experimentally validated
-biological structure using a variety of metrics including interface accuracy (DockQ), TCR-specific
+biological structure using a variety of metrics including interface accuracy (DockQ) {[}34,35{]}, TCR-specific
 accuracy (MHC-aligned weighted all-CDR C\ensuremath{\alpha} RMSD and framework-aligned
-CDR3 all-atom RMSD), confidence calibration, sensitivity to reference
+CDR3 all-atom RMSD) {[}23,36{]}, confidence calibration, sensitivity to reference
 resolution and to training-set similarity. We then investigate the structural
 disagreement between the two leading models, AlphaFold 3 and ESMFold2 to understand the sources of
 their differences. Together, these insights will better guide areas of future improvements to these
@@ -190,9 +190,9 @@ computational models and assist in practical applications such as immunotherapy 
 \subsection{2.1 Benchmark set
 construction}\label{benchmark-set-construction}
 
-We constructed a dataset of TCR-pMHC Class I and Class II complexes from the TCR3d database {[}1,3{]}, which
+We constructed a dataset of TCR-pMHC Class I and Class II complexes from the TCR3d database {[}12,14{]}, which
 curates all known TCR complex structures. Restricting to \ensuremath{\alpha}\ensuremath{\beta} TCR complexes
-with an initial RCSB release date after 30 September 2021 gave 427 class
+with an initial RCSB {[}37{]} release date after 30 September 2021 gave 427 class
 I and 72 class II candidates. Of these, 136 were complete
 TCR--peptide--MHC complexes containing all of an MHC peptide-binding
 platform, a peptide, and paired TCR \ensuremath{\alpha} and \ensuremath{\beta} variable domains (114 class
@@ -252,17 +252,17 @@ methods}\label{structure-prediction-methods}
 
 Four methods were run on identical inputs.
 
-AlphaFold 3 {[}6{]} predictions were obtained through the AlphaFold
+AlphaFold 3 {[}22{]} predictions were obtained through the AlphaFold
 Server, which supplies MSAs and structural templates from its own
 pipeline and returns five ranked diffusion samples; the top-ranked model
 by ranking score was scored. The server enforces a 30 September 2021
 training cutoff.
 
-Protenix {[}22{]}, an open reproduction of the AlphaFold 3 architecture,
+Protenix {[}38{]}, an open reproduction of the AlphaFold 3 architecture,
 was run through its public server with the same inputs, and the
 top-ranked model scored.
 
-ESMFold2 {[}21{]} was run through the ESM SDK
+ESMFold2 {[}29{]} was run through the ESM SDK
 API as model \texttt{esmfold2-fast-2026-05} with the SDK defaults of 10
 refinement loops and 100 sampling steps. ESMFold2 is a diffusion
 structure predictor in the same sense as AlphaFold 3, but it takes no
@@ -272,7 +272,7 @@ architectural contrast on which the present comparison rests, and it is
 a strict one, since the two methods share the diffusion generative head
 and little else on the conditioning side.
 
-TCRmodel2 {[}8{]} was installed locally from the Pierce laboratory
+TCRmodel2 {[}24{]} was installed locally from the Pierce laboratory
 repository (commit \texttt{90536de}, AlphaFold 2.3 base,
 \texttt{alphafold\_params\_2022-12-06}) with
 \texttt{-\/-max\_template\_date=2021-09-30} applied explicitly to both
@@ -287,7 +287,7 @@ run at default sampler settings on one RTX PRO 6000 (Section 2.9).
 
 \subsection{2.5 Accuracy metrics}\label{accuracy-metrics}
 
-Interface accuracy was measured with DockQ v2.1.3 {[}14,15{]}, run once
+Interface accuracy was measured with DockQ v2.1.3 {[}34,35{]}, run once
 per complex with an explicit identity chain mapping. Without one, DockQ
 optimises chain assignment and can swap the homologous TCR\ensuremath{\alpha} and TCR\ensuremath{\beta}
 chains, silently inflating scores. The primary reported quantity is
@@ -296,12 +296,12 @@ whole complex; per-pairwise-interface DockQ values are also retained,
 giving 6 interfaces per class I complex and 10 per class II complex.
 Standard CAPRI thresholds are used throughout (\textless{} 0.23
 incorrect, 0.23--0.49 acceptable, 0.49--0.80 medium, \ensuremath{\geq} 0.80 high)
-{[}16{]}.
+{[}39{]}.
 
 Two TCR-specific metrics were computed on the same top-ranked
 predictions the DockQ workflow scores; predictions were never selected
 using a native RMSD. TCR\ensuremath{\alpha} and TCR\ensuremath{\beta} chains were annotated once per
-biological sequence with ANARCI {[}17{]} under IMGT numbering {[}18{]},
+biological sequence with ANARCI {[}40,41{]} under IMGT numbering {[}42{]},
 and the annotation propagated to prediction and native coordinates
 through pairwise sequence alignment rather than through PDB residue
 numbering. CDR ranges were the inclusive IMGT intervals 27--38 (CDR1),
@@ -309,9 +309,9 @@ numbering. CDR ranges were the inclusive IMGT intervals 27--38 (CDR1),
 all four regions on both chains, eight in total.
 
 The first, the MHC-aligned weighted all-CDR C\ensuremath{\alpha} RMSD, follows the TCRdock
-formulation {[}7,19{]}. MHC residues are matched between prediction and
+formulation {[}23,36{]}. MHC residues are matched between prediction and
 native by sequence alignment; a single ordinary-least-squares Kabsch
-superposition of the class I peptide-binding platform (or, jointly, of
+superposition {[}43{]} of the class I peptide-binding platform (or, jointly, of
 both class II peptide-binding domains) is applied to the entire
 predicted complex, and no further fit is performed. C\ensuremath{\alpha} RMSD is then
 computed over the eight CDR regions with CDR3 residues weighted 3 and
@@ -346,10 +346,10 @@ nothing, because chain assignment is by sequence and biological role.
 scores}\label{confidence-and-reference-free-quality-scores}
 
 Each method's own interface confidence (ipTM, and pTM and mean pLDDT
-where available) was taken from its output. pDockQ {[}20{]} was computed
+where available) {[}19,20{]} was taken from its output. pDockQ {[}44{]} was computed
 per interface from the predicted structure and per-residue confidence,
 and averaged per complex. A published random-forest quality-tier
-classifier for TCR--pMHC models {[}11{]} was re-implemented against this
+classifier for TCR--pMHC models {[}30{]} was re-implemented against this
 benchmark's chain convention and evaluated on the subset of class I
 targets whose PDB identifiers do not appear in its training set (n =
 27), alongside a composite score combining the weakest pairwise ipTM,
@@ -363,12 +363,12 @@ Because neither AlphaFold 3's nor Protenix's actual training list is
 public, we used structures available in the PDB on or before 30
 September 2021 as a reproducible proxy. Candidate reference entries were
 the union of TCR3d's class I and class II complex tables and the STCRDab
-all-structures summary {[}2{]} filtered to \texttt{TCRtype\ =\ abTCR}
+all-structures summary {[}13{]} filtered to \texttt{TCRtype\ =\ abTCR}
 and \texttt{mhc\_type\ \ensuremath{\in}\ \{MH1,\ MH2\}}; of 395 candidates, 259 were
 released on or before the cutoff per RCSB
 \texttt{initial\_release\_date}, yielding 1,112 consistently cropped
 chains from 258 complete complexes. Every polymer entity of every
-reference entry was aligned by blastp against the benchmark's own
+reference entry was aligned by blastp {[}45{]} against the benchmark's own
 cropped chains, and the best-scoring benchmark role defined both the
 role assignment and the crop, so reference chains are cut to exactly the
 domain boundaries the benchmark uses and role assignment never depends
@@ -378,7 +378,7 @@ preference reassigned.
 
 Identity was reported over the benchmark chain length with \ensuremath{\geq} 80\% query
 coverage required. Peptides (4--16 residues) are too short for blastp
-heuristics and were instead locally aligned (BLOSUM62, gap \ensuremath{-}11/\ensuremath{-}1)
+heuristics and were instead locally aligned (BLOSUM62 {[}46{]}, gap \ensuremath{-}11/\ensuremath{-}1)
 against every reference peptide under the same coverage rule. The
 \emph{closest complete reference complex} requires every corresponding
 chain to come from one reference entry, and is the entry maximising mean
@@ -432,8 +432,8 @@ complexes both methods predicted. Correlations are Pearson and Spearman
 with bootstrap confidence intervals (10,000 resamples, fixed seed);
 regressions use ordinary least squares with HC3 robust standard errors.
 Software versions: Python 3.13.9 and 3.11.16, DockQ 2.1.3, ANARCI 1.3
-(HMMER 3.4), Biopython 1.87/1.81, blastp 2.12.0+, NumPy 2.3.5, SciPy
-1.16.3, statsmodels 0.14.5, JAX 0.9.1, transformers 4.57.6, esm 3.3.0.
+(HMMER 3.4), Biopython 1.87/1.81 {[}47{]}, blastp 2.12.0+, NumPy 2.3.5 {[}48{]}, SciPy
+1.16.3 {[}49{]}, statsmodels 0.14.5, JAX 0.9.1, transformers 4.57.6, esm 3.3.0.
 
 \section{3 Results}\label{results}
 
@@ -474,7 +474,7 @@ largest fraction in the medium-or-better band (91.3\%: 54.0\% medium,
 slightly higher median therefore coexists with a slightly heavier
 acceptable-only tail than ESMFold2's --- the two distributions cross.
 
-This result runs counter to the current consensus {[}10,11{]}: a
+This result runs counter to the current consensus {[}27,30{]}: a
 predictor that uses neither an MSA nor a structural template matches
 AlphaFold 3 on post-cutoff TCR--pMHC complexes.
 
@@ -658,7 +658,7 @@ order of magnitude smaller than the spread across complexes for docking
 approximately the same quality of CDR3 loop, and differ almost entirely
 in where they put it. This is consistent with Shi et al.'s observation
 that CDR3 loops and docking orientation are separate, and separately
-unsolved, problems {[}12{]}.
+unsolved, problems {[}28{]}.
 
 Two secondary observations follow from Table 3. First, ESMFold2's
 advantage is concentrated in the CDR3\ensuremath{\beta} loop and in class II: its class
@@ -679,7 +679,7 @@ Median Global DockQ for class II versus class I is 0.752 versus 0.750
 subset is small (n = 15). ESMFold2's class II mean (0.743) is its
 highest subgroup mean. We note this mainly as a caution: with 15 class
 II complexes, this benchmark cannot resolve a class effect of the size
-other studies report, and the TCRmodel2 comparison is class I only by
+other studies report {[}27,28{]}, and the TCRmodel2 comparison is class I only by
 construction.
 
 \subsection{3.6 Effect of reference
@@ -716,7 +716,7 @@ four-term composite of the weakest pairwise ipTM, pDockQ, CDR3\ensuremath{\alpha
 and the worst pairwise PAE --- computed from a single AlphaFold 3
 prediction, with no second structure and no reference --- reaches r =
 0.712 (95\% CI 0.617--0.791) and \ensuremath{\rho} = 0.725 (0.624--0.803). On the same
-126 complexes a published random-forest quality-tier classifier {[}11{]}
+126 complexes a published random-forest quality-tier classifier {[}30{]}
 reaches r = 0.662 and \ensuremath{\rho} = 0.674; the paired difference is +0.050 Pearson
 (95\% bootstrap CI +0.015 to +0.085) and +0.051 Spearman (+0.008 to
 +0.098). On the 27 class I targets whose PDB identifiers are absent from
@@ -821,7 +821,7 @@ on 115; the two together succeed on 119 (103 both, 4 AlphaFold 3 only,
 12 ESMFold2 only, 7 neither). Pooling an MSA-based and a
 language-model-based predictor therefore raises the medium-or-better
 rate from 85\% or 91\% to 94\% --- echoing the pooling gains Yin et
-al.~report for antibody--peptide complexes {[}13{]} --- and, because
+al.~report for antibody--peptide complexes {[}31{]} --- and, because
 disagreement itself flags the failures, the pool comes with a built-in
 triage signal.
 
@@ -986,14 +986,14 @@ complexes, a diffusion predictor conditioned only on a protein language
 model matched AlphaFold 3 running with server-supplied MSAs and
 templates (median Global DockQ 0.736 vs 0.751, paired p = 0.68), and
 exceeded it in the fraction of medium-or-better models (91.3\% vs
-84.9\%). This differs from the current consensus {[}10,11{]}. The
+84.9\%). This differs from the current consensus {[}27,30{]}. The
 discrepancy appears to be generational rather than contradictory: the
 PLM predictors in those comparisons are ESMFold-generation models whose
 structure module descends from AlphaFold 2, whereas ESMFold2 pairs a
 6-billion-parameter language model with a diffusion structure head. The
 most informative data point in Lu et al.~is that their best-performing
 PLM method was the one built on an AlphaFold-3-style architecture
-{[}10{]}; the present result is the same observation with the
+{[}27{]}; the present result is the same observation with the
 architecture gap closed further. Why this should hold for this problem
 in particular is worth stating explicitly: TCR variable domains and MHC
 platforms are among the most heavily sequenced and most heavily
@@ -1014,7 +1014,7 @@ methods of half an \aa{}ngström. Docking accuracy, by contrast, spans tens
 of \aa{}ngströms, is right-skewed with catastrophic outliers, and accounts
 for essentially all of the difference between methods and between
 complexes. This reproduces the decomposition Shi et al.~reported
-{[}12{]} on a larger and more recent set, and it argues that further
+{[}28{]} on a larger and more recent set, and it argues that further
 progress on TCR--pMHC modelling will come from the placement problem,
 not from loop refinement.
 
@@ -1048,7 +1048,7 @@ should be emphasised: n = 30, one GPU, one seed per complex, and one
 narrow size regime (397--416 residues, all in AlphaFold 3's 512-token
 bucket). Larger complexes shift the trunk/diffusion split --- the trunk
 scales roughly quadratically in the pair track while diffusion scales
-with atom count --- so the 1.9\ensuremath{\times} ceiling moves. Within this regime,
+with atom count {[}22{]} --- so the 1.9\ensuremath{\times} ceiling moves. Within this regime,
 though, the finding is straightforward: for high-throughput TCR--pMHC
 screening the default settings buy almost nothing, and the compute is
 better spent on a second architecture, which Section 3.9 shows is worth
@@ -1141,99 +1141,103 @@ hashes are recorded in the accompanying manifests.
 \def\labelenumi{\arabic{enumi}.}
 \tightlist
 \item
-  Gowthaman R, Pierce BG. TCR3d: The T cell receptor structural
-  repertoire database. \emph{Bioinformatics} 2019;35(24):5323--5325.
-  doi:10.1093/bioinformatics/btz517
+  Davis MM, Bjorkman PJ. T-cell antigen receptor genes and T-cell recognition. \emph{Nature} 1988;334(6181):395--402. doi:10.1038/334395a0
 \item
-  Leem J, de Oliveira SHP, Krawczyk K, Deane CM. STCRDab: the structural
-  T-cell receptor database. \emph{Nucleic Acids Res}
-  2018;46(D1):D406--D412. doi:10.1093/nar/gkx971
+  Rossjohn J, Gras S, Miles JJ, Turner SJ, Godfrey DI, McCluskey J. T cell antigen receptor recognition of antigen-presenting molecules. \emph{Annu Rev Immunol} 2015;33:169--200. doi:10.1146/annurev-immunol-032414-112334
 \item
-  Lin V, Cheung M, Gowthaman R, Eisenberg M, Baker BM, Pierce BG. TCR3d
-  2.0: expanding the T cell receptor structure database with new
-  structures, tools and interactions. \emph{Nucleic Acids Res}
-  2025;53(D1):D604--D608. doi:10.1093/nar/gkae840
+  Bjorkman PJ, Saper MA, Samraoui B, Bennett WS, Strominger JL, Wiley DC. Structure of the human class I histocompatibility antigen, HLA-A2. \emph{Nature} 1987;329(6139):506--512. doi:10.1038/329506a0
 \item
-  Jumper J, Evans R, Pritzel A, et al.~Highly accurate protein structure
-  prediction with AlphaFold. \emph{Nature} 2021;596(7873):583--589.
-  doi:10.1038/s41586-021-03819-2
+  Brown JH, Jardetzky TS, Gorga JC, et al.~Three-dimensional structure of the human class II histocompatibility antigen HLA-DR1. \emph{Nature} 1993;364(6432):33--39. doi:10.1038/364033a0
 \item
-  Yin R, Feng BY, Varshney A, Pierce BG. Benchmarking AlphaFold for
-  protein complex modeling reveals accuracy determinants. \emph{Protein
-  Sci} 2022;31(8):e4379. doi:10.1002/pro.4379
+  Garboczi DN, Ghosh P, Utz U, Fan QR, Biddison WE, Wiley DC. Structure of the complex between human T-cell receptor, viral peptide and HLA-A2. \emph{Nature} 1996;384(6605):134--141. doi:10.1038/384134a0
 \item
-  Abramson J, Adler J, Dunger J, et al.~Accurate structure prediction of
-  biomolecular interactions with AlphaFold 3. \emph{Nature}
-  2024;630(8016):493--500. doi:10.1038/s41586-024-07487-w
+  Garcia KC, Degano M, Stanfield RL, et al.~An \ensuremath{\alpha}\ensuremath{\beta} T cell receptor structure at 2.5 \AA{} and its orientation in the TCR-MHC complex. \emph{Science} 1996;274(5285):209--219. doi:10.1126/science.274.5285.209
 \item
-  Bradley P. Structure-based prediction of T cell receptor:peptide-MHC
-  interactions. \emph{eLife} 2023;12:e82813. doi:10.7554/eLife.82813
+  Rudolph MG, Stanfield RL, Wilson IA. How TCRs bind MHCs, peptides, and coreceptors. \emph{Annu Rev Immunol} 2006;24:419--466. doi:10.1146/annurev.immunol.23.021704.115658
 \item
-  Yin R, Ribeiro-Filho HV, Lin V, Gowthaman R, Cheung M, Pierce BG.
-  TCRmodel2: high-resolution modeling of T cell receptor recognition
-  using deep learning. \emph{Nucleic Acids Res} 2023;51(W1):W569--W576.
-  doi:10.1093/nar/gkad356
+  Marrack P, Scott-Browne JP, Dai S, Gapin L, Kappler JW. Evolutionarily conserved amino acids that control TCR-MHC interaction. \emph{Annu Rev Immunol} 2008;26:171--203. doi:10.1146/annurev.immunol.26.021607.090421
 \item
-  Lin Z, Akin H, Rao R, et al.~Evolutionary-scale prediction of
-  atomic-level protein structure with a language model. \emph{Science}
-  2023;379(6637):1123--1130. doi:10.1126/science.ade2574
+  Dash P, Fiore-Gartland AJ, Hertz T, et al.~Quantifiable predictive features define epitope-specific T cell receptor repertoires. \emph{Nature} 2017;547(7661):89--93. doi:10.1038/nature22383
 \item
-  Lu J, Zhu X, Hu X, Zhang C, Feng F. Benchmarking TCR--pMHC structure
-  prediction: a unified evaluation and CDR3-based functional insights.
-  \emph{Brief Bioinform} 2026;27(3):bbag289. doi:10.1093/bib/bbag289
+  Glanville J, Huang H, Nau A, et al.~Identifying specificity groups in the T cell receptor repertoire. \emph{Nature} 2017;547(7661):94--98. doi:10.1038/nature22976
 \item
-  Ascunce-París A, Romero-Durana M, Valencia A, Farriol-Duran R, Guallar
-  V. Structural quality-tier assessment for TCR-pMHC functional
-  enrichment. \emph{Front Immunol} 2026;17:1869810.
-  doi:10.3389/fimmu.2026.1869810
+  Nathan P, Hassel JC, Rutkowski P, et al.~Overall survival benefit with tebentafusp in metastatic uveal melanoma. \emph{N Engl J Med} 2021;385(13):1196--1206. doi:10.1056/NEJMoa2103485
 \item
-  Shi Y, Parks JM, Smith JC. Comparative analysis of TCR and TCR-pMHC
-  complex structure prediction tools. \emph{J Chem Inf Model}
-  2025;65(13):7156--7173. doi:10.1021/acs.jcim.5c00298
+  Gowthaman R, Pierce BG. TCR3d: The T cell receptor structural repertoire database. \emph{Bioinformatics} 2019;35(24):5323--5325. doi:10.1093/bioinformatics/btz517
 \item
-  Yin R, Saravanakumar S, Shi SY, et al.~Benchmarking AlphaFold and
-  related deep learning approaches for modeling antibody and TCR antigen
-  recognition. \emph{bioRxiv} 2026:2026.07.04.736425.
-  doi:10.64898/2026.07.04.736425
+  Leem J, de Oliveira SHP, Krawczyk K, Deane CM. STCRDab: the structural T-cell receptor database. \emph{Nucleic Acids Res} 2018;46(D1):D406--D412. doi:10.1093/nar/gkx971
 \item
-  Basu S, Wallner B. DockQ: a quality measure for protein-protein
-  docking models. \emph{PLoS One} 2016;11(8):e0161879.
-  doi:10.1371/journal.pone.0161879
+  Lin V, Cheung M, Gowthaman R, Eisenberg M, Baker BM, Pierce BG. TCR3d 2.0: expanding the T cell receptor structure database with new structures, tools and interactions. \emph{Nucleic Acids Res} 2025;53(D1):D604--D608. doi:10.1093/nar/gkae840
 \item
-  Mirabello C, Wallner B. DockQ v2: improved automatic quality measure
-  for protein multimers, nucleic acids, and small molecules.
-  \emph{Bioinformatics} 2024;40(10):btae586.
-  doi:10.1093/bioinformatics/btae586
+  Arstila TP, Casrouge A, Baron V, Even J, Kanellopoulos J, Kourilsky P. A direct estimate of the human \ensuremath{\alpha}\ensuremath{\beta} T cell receptor diversity. \emph{Science} 1999;286(5441):958--961. doi:10.1126/science.286.5441.958
 \item
-  Lensink MF, Brysbaert G, Raouraoua N, et al.~Impact of AlphaFold on
-  structure prediction of protein complexes: the CASP15-CAPRI
-  experiment. \emph{Proteins} 2023;91(12):1658--1683.
-  doi:10.1002/prot.26609
+  Sewell AK. Why must T cells be cross-reactive? \emph{Nat Rev Immunol} 2012;12(9):669--677. doi:10.1038/nri3279
 \item
-  Dunbar J, Deane CM. ANARCI: antigen receptor numbering and receptor
-  classification. \emph{Bioinformatics} 2016;32(2):298--300.
-  doi:10.1093/bioinformatics/btv552
+  Wooldridge L, Ekeruche-Makinde J, van den Berg HA, et al.~A single autoimmune T cell receptor recognizes more than a million different peptides. \emph{J Biol Chem} 2012;287(2):1168--1177. doi:10.1074/jbc.M111.289488
 \item
-  Lefranc MP, Pommié C, Ruiz M, et al.~IMGT unique numbering for
-  immunoglobulin and T cell receptor variable domains and Ig superfamily
-  V-like domains. \emph{Dev Comp Immunol} 2003;27(1):55--77.
-  doi:10.1016/s0145-305x(02)00039-3
+  Birnbaum ME, Mendoza JL, Sethi DK, et al.~Deconstructing the peptide-MHC specificity of T cell recognition. \emph{Cell} 2014;157(5):1073--1087. doi:10.1016/j.cell.2014.03.047
 \item
-  Woods LJ, Neff B, Lahouel K, et al.~General prediction of T cell
-  receptor antigen specificity from sequence using AlphaFold 3.
-  \emph{bioRxiv} 2026:2026.06.02.729478. doi:10.64898/2026.06.02.729478
+  Jumper J, Evans R, Pritzel A, et al.~Highly accurate protein structure prediction with AlphaFold. \emph{Nature} 2021;596(7873):583--589. doi:10.1038/s41586-021-03819-2
 \item
-  Bryant P, Pozzati G, Elofsson A. Improved prediction of
-  protein-protein interactions using AlphaFold2. \emph{Nat Commun}
-  2022;13(1):1265. doi:10.1038/s41467-022-28865-w
+  Evans R, O'Neill M, Pritzel A, et al.~Protein complex prediction with AlphaFold-Multimer. \emph{bioRxiv} 2022:2021.10.04.463034. doi:10.1101/2021.10.04.463034
 \item
-  ESMFold2 model release, \texttt{biohub/ESMFold2} (revision
-  \texttt{8fc3ff47}) with \texttt{biohub/ESMC-6B} (revision
-  \texttt{45b0fa5d}), accessed via the ESM SDK, model
-  \texttt{esmfold2-fast-2026-05}.
+  Yin R, Feng BY, Varshney A, Pierce BG. Benchmarking AlphaFold for protein complex modeling reveals accuracy determinants. \emph{Protein Sci} 2022;31(8):e4379. doi:10.1002/pro.4379
 \item
-  Protenix: an open reproduction of the AlphaFold 3 architecture
-  (ByteDance AML AI4Science), run through the public Protenix server.
+  Abramson J, Adler J, Dunger J, et al.~Accurate structure prediction of biomolecular interactions with AlphaFold 3. \emph{Nature} 2024;630(8016):493--500. doi:10.1038/s41586-024-07487-w
+\item
+  Bradley P. Structure-based prediction of T cell receptor:peptide-MHC interactions. \emph{eLife} 2023;12:e82813. doi:10.7554/eLife.82813
+\item
+  Yin R, Ribeiro-Filho HV, Lin V, Gowthaman R, Cheung M, Pierce BG. TCRmodel2: high-resolution modeling of T cell receptor recognition using deep learning. \emph{Nucleic Acids Res} 2023;51(W1):W569--W576. doi:10.1093/nar/gkad356
+\item
+  Marks DS, Colwell LJ, Sheridan R, et al.~Protein 3D structure computed from evolutionary sequence variation. \emph{PLoS One} 2011;6(12):e28766. doi:10.1371/journal.pone.0028766
+\item
+  Lin Z, Akin H, Rao R, et al.~Evolutionary-scale prediction of atomic-level protein structure with a language model. \emph{Science} 2023;379(6637):1123--1130. doi:10.1126/science.ade2574
+\item
+  Lu J, Zhu X, Hu X, Zhang C, Feng F. Benchmarking TCR--pMHC structure prediction: a unified evaluation and CDR3-based functional insights. \emph{Brief Bioinform} 2026;27(3):bbag289. doi:10.1093/bib/bbag289
+\item
+  Shi Y, Parks JM, Smith JC. Comparative analysis of TCR and TCR-pMHC complex structure prediction tools. \emph{J Chem Inf Model} 2025;65(13):7156--7173. doi:10.1021/acs.jcim.5c00298
+\item
+  ESMFold2 model release, \texttt{biohub/ESMFold2} (revision \texttt{8fc3ff47}) with \texttt{biohub/ESMC-6B} (revision \texttt{45b0fa5d}), accessed via the ESM SDK, model \texttt{esmfold2-fast-2026-05}.
+\item
+  Ascunce-París A, Romero-Durana M, Valencia A, Farriol-Duran R, Guallar V. Structural quality-tier assessment for TCR-pMHC functional enrichment. \emph{Front Immunol} 2026;17:1869810. doi:10.3389/fimmu.2026.1869810
+\item
+  Yin R, Saravanakumar S, Shi SY, et al.~Benchmarking AlphaFold and related deep learning approaches for modeling antibody and TCR antigen recognition. \emph{bioRxiv} 2026:2026.07.04.736425. doi:10.64898/2026.07.04.736425
+\item
+  Karras T, Aittala M, Aila T, Laine S. Elucidating the design space of diffusion-based generative models. In: \emph{Advances in Neural Information Processing Systems 35 (NeurIPS 2022)}. 2022:26565--26577. arXiv:2206.00364
+\item
+  Watson JL, Juergens D, Bennett NR, et al.~De novo design of protein structure and function with RFdiffusion. \emph{Nature} 2023;620(7976):1089--1100. doi:10.1038/s41586-023-06415-8
+\item
+  Basu S, Wallner B. DockQ: a quality measure for protein-protein docking models. \emph{PLoS One} 2016;11(8):e0161879. doi:10.1371/journal.pone.0161879
+\item
+  Mirabello C, Wallner B. DockQ v2: improved automatic quality measure for protein multimers, nucleic acids, and small molecules. \emph{Bioinformatics} 2024;40(10):btae586. doi:10.1093/bioinformatics/btae586
+\item
+  Woods LJ, Neff B, Lahouel K, et al.~General prediction of T cell receptor antigen specificity from sequence using AlphaFold 3. \emph{bioRxiv} 2026:2026.06.02.729478. doi:10.64898/2026.06.02.729478
+\item
+  Berman HM, Westbrook J, Feng Z, et al.~The Protein Data Bank. \emph{Nucleic Acids Res} 2000;28(1):235--242. doi:10.1093/nar/28.1.235
+\item
+  Protenix: an open reproduction of the AlphaFold 3 architecture (ByteDance AML AI4Science), run through the public Protenix server.
+\item
+  Lensink MF, Brysbaert G, Raouraoua N, et al.~Impact of AlphaFold on structure prediction of protein complexes: the CASP15-CAPRI experiment. \emph{Proteins} 2023;91(12):1658--1683. doi:10.1002/prot.26609
+\item
+  Dunbar J, Deane CM. ANARCI: antigen receptor numbering and receptor classification. \emph{Bioinformatics} 2016;32(2):298--300. doi:10.1093/bioinformatics/btv552
+\item
+  Eddy SR. Accelerated profile HMM searches. \emph{PLoS Comput Biol} 2011;7(10):e1002195. doi:10.1371/journal.pcbi.1002195
+\item
+  Lefranc MP, Pommié C, Ruiz M, et al.~IMGT unique numbering for immunoglobulin and T cell receptor variable domains and Ig superfamily V-like domains. \emph{Dev Comp Immunol} 2003;27(1):55--77. doi:10.1016/s0145-305x(02)00039-3
+\item
+  Kabsch W. A solution for the best rotation to relate two sets of vectors. \emph{Acta Crystallogr A} 1976;32(5):922--923. doi:10.1107/S0567739476001873
+\item
+  Bryant P, Pozzati G, Elofsson A. Improved prediction of protein-protein interactions using AlphaFold2. \emph{Nat Commun} 2022;13(1):1265. doi:10.1038/s41467-022-28865-w
+\item
+  Altschul SF, Gish W, Miller W, Myers EW, Lipman DJ. Basic local alignment search tool. \emph{J Mol Biol} 1990;215(3):403--410. doi:10.1016/S0022-2836(05)80360-2
+\item
+  Henikoff S, Henikoff JG. Amino acid substitution matrices from protein blocks. \emph{Proc Natl Acad Sci U S A} 1992;89(22):10915--10919. doi:10.1073/pnas.89.22.10915
+\item
+  Cock PJA, Antao T, Chang JT, et al.~Biopython: freely available Python tools for computational molecular biology and bioinformatics. \emph{Bioinformatics} 2009;25(11):1422--1423. doi:10.1093/bioinformatics/btp163
+\item
+  Harris CR, Millman KJ, van der Walt SJ, et al.~Array programming with NumPy. \emph{Nature} 2020;585(7825):357--362. doi:10.1038/s41586-020-2649-2
+\item
+  Virtanen P, Gommers R, Oliphant TE, et al.~SciPy 1.0: fundamental algorithms for scientific computing in Python. \emph{Nat Methods} 2020;17(3):261--272. doi:10.1038/s41592-019-0686-2
 \end{enumerate}
 
 \end{document}
