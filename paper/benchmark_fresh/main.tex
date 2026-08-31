@@ -264,7 +264,7 @@ No redundancy filter or resolution cut was applied to the primary set.
 TCR variable-domain identity is a poor novelty axis --- germline V-gene
 framework dominates a \textasciitilde110-residue V domain --- and
 filtering on it discards most of the set while retaining an
-idiosyncratic remainder (Section 3.9). Instead, similarity to the
+idiosyncratic remainder (Section 3.8). Instead, similarity to the
 pre-cutoff structural record is measured explicitly and treated as a
 covariate.
 
@@ -339,7 +339,7 @@ was therefore run on class I only, giving 111 predictions.
 
 Mean end-to-end runtimes were 5.2 s per complex for the ESMFold2 API
 (median, IQR 4.9--6.4 s) and 13.4 s per complex for a local AlphaFold 3
-run at default sampler settings on one RTX PRO 6000 (Section 2.11).
+run at default sampler settings on one RTX PRO 6000 (Section 2.10).
 
 \subsection{2.4 Interface accuracy}\label{interface-accuracy}
 
@@ -456,36 +456,7 @@ benchmark's chain convention and scored on all 126 complexes; the subset
 of class I targets whose PDB identifiers do not appear in its training
 set (n = 27) is reported separately throughout.
 
-\subsection{2.10 A composite single-prediction confidence
-score}\label{a-composite-single-prediction-confidence-score}
-
-Each of the scores above summarises one aspect of a prediction. We
-combined four of them into a single quantity, MOGGER, as their geometric
-mean:
-
-{\large
-\[\mathrm{MOGGER}=\left(\min_{i\neq j}\mathrm{ipTM}_{ij}\;\cdot\;\mathrm{pDockQ}\;\cdot\;\frac{\mathrm{pLDDT}_{\mathrm{CDR3}\alpha}}{100}\;\cdot\;\frac{1}{1+\max_{i\neq j}\mathrm{PAE}^{\min}_{ij}}\right)^{1/4}\]
-}
-
-\noindent where $\mathrm{ipTM}_{ij}$ and $\mathrm{PAE}^{\min}_{ij}$ are
-the off-diagonal entries of AlphaFold 3's chain-pair ipTM and chain-pair
-minimum-PAE matrices, so the first and fourth terms are the weakest and
-the least certain chain relationship in the complex; pDockQ is the
-interface score of Section 2.9; and $\mathrm{pLDDT}_{\mathrm{CDR3}\alpha}$
-is the mean pLDDT of the CDR3\ensuremath{\alpha} loop, the region that has to be right for
-the TCR to dock correctly, and the term Lu et al.~found to track docking
-quality better than ipTM or pTM [25]. Each term lies on the unit interval, so the
-geometric mean penalises a single weak term more than an arithmetic mean
-would --- a prediction is only as good as its worst-supported part.
-
-Every input is read from one AlphaFold 3 \texttt{model\_0} prediction and
-its own summary and full confidence files. No second sample, no second
-architecture, no template and no reference structure enters the score,
-which is what makes it usable prospectively. The formula was fixed on
-this benchmark and is therefore reported as a benchmark result, not as a
-validated external predictor.
-
-\subsection{2.11 Sampler instrumentation and
+\subsection{2.10 Sampler instrumentation and
 timing}\label{sampler-instrumentation-and-timing}
 
 Both models' official samplers were patched observationally to retain
@@ -510,7 +481,7 @@ warm-up predictions run and discarded before timing. Instrumentation
 costs \textasciitilde2\% and was run as a separate pass, so the baseline
 track is stock AlphaFold 3.
 
-\subsection{2.12 Statistics and software}\label{statistics-and-software}
+\subsection{2.11 Statistics and software}\label{statistics-and-software}
 
 Paired method comparisons use the Wilcoxon signed-rank test on the
 complexes both methods predicted. Correlations are Pearson and Spearman
@@ -913,6 +884,16 @@ so its confidence is both more conservative and better ordered. pDockQ
 shows the same ranking with lower correlations overall (ESMFold2 r =
 0.676, Protenix 0.611, AlphaFold 3 0.577).
 
+A learned quality model does not improve on this. The published
+random-forest quality-tier classifier for TCR--pMHC models [26],
+re-implemented against this benchmark's chain convention and scored on
+the same 126 complexes, reaches r = 0.662 (\ensuremath{\rho} = 0.674) against Global
+DockQ --- indistinguishable from AlphaFold 3's own ipTM at 0.660 (0.654),
+the score it was built to improve on. On the 27 class I targets whose
+PDB identifiers are absent from its training set the two remain
+indistinguishable. The reference-free signal that does beat both is not a
+quality model at all (Section 3.9).
+
 \begin{figure}
 \centering
 \includegraphics[width=1\linewidth,height=\textheight,keepaspectratio,alt={Determinants of interface accuracy. (A) Global DockQ against each method's own ipTM, with per-method linear fits and Pearson r. ESMFold2's confidence is both more conservative --- it reaches a given DockQ at a lower ipTM --- and better ordered. (B) Global DockQ by MHC class. Shaded bands are the CAPRI quality classes.}]{Figure_determinants.png}
@@ -924,58 +905,7 @@ and Pearson \emph{r}. ESMFold2's confidence is both more conservative
 CAPRI quality classes.}
 \end{figure}
 
-\subsection{3.8 A composite single-prediction score beats the published
-classifier}\label{a-composite-single-prediction-score-beats-the-published-classifier}
-
-For AlphaFold 3 specifically, single global confidence scores leave
-accuracy on the table. Replacing ipTM with the weakest \emph{pairwise}
-ipTM already raises Pearson r from 0.660 to 0.695 over all 126
-complexes, and the four-term composite of Section 2.10 --- computed from
-one AlphaFold 3 prediction, with no second structure and no reference
---- reaches r = 0.712 (95\% CI 0.617--0.791) and \ensuremath{\rho} = 0.725
-(0.624--0.803) (Figure 5A).
-
-It is the best of the scores available for an AlphaFold 3 prediction
-(Figure 5B). On the same 126 complexes the published random-forest quality-tier
-classifier [26] reaches r = 0.662 (\ensuremath{\rho} = 0.674), AlphaFold 3's own ipTM
-0.660 (0.654) and pDockQ 0.660 (0.679) --- that is, the classifier does
-no better than the two confidence scores it was built to improve on. The
-paired difference between the composite and the classifier is +0.050
-Pearson (95\% bootstrap CI +0.015 to +0.085) and +0.051 Spearman (+0.008
-to +0.098), so the advantage over all 126 complexes excludes zero on
-both metrics.
-
-That margin narrows on every subset. On the 111 class I
-complexes the composite reaches r = 0.738 and \ensuremath{\rho} = 0.760 against the
-classifier's 0.700 and 0.734, a paired +0.038 Pearson (CI +0.004 to
-+0.072) but +0.027 Spearman (\ensuremath{-}0.013 to +0.067). On the 27 class I
-targets whose PDB identifiers are absent from the classifier's training
-set the two are indistinguishable, and the sign is not even consistent:
-+0.021 Pearson (\ensuremath{-}0.080 to +0.129) and \ensuremath{-}0.047 Spearman (\ensuremath{-}0.187 to
-+0.078). The 15 class II complexes favour the composite by +0.082 on
-both metrics, with intervals several times wider than the effect.
-
-Two things follow. The composite is the better ranking of AlphaFold 3
-predictions across this benchmark, but its formula was fixed on this
-benchmark, and 27 unseen targets cannot separate it from the classifier;
-we therefore do not claim a resolved advantage for any single-model
-score on unseen targets. And all of these scores --- learned or not ---
-are beaten by a quantity that needs no quality model at all
-(Section 3.10).
-
-\begin{figure}
-\centering
-\includegraphics[width=1\linewidth,height=\textheight,keepaspectratio,alt={The composite single-prediction confidence score against the published alternatives. (A) Global DockQ against the composite score for the 126 complexes, with the linear fit and both correlations; shaded bands are the CAPRI quality classes. (B) Pearson r and Spearman rho with Global DockQ for every score computable from one AlphaFold 3 prediction, over all 126 complexes; whiskers are 95 percent bootstrap intervals. }]{Figure_mogger.png}
-\caption{\textbf{A composite single-prediction score against the
-published alternatives.} (\textbf{A}) Global DockQ against MOGGER for
-the 126 complexes, with the linear fit and both correlations; shaded
-bands are the CAPRI quality classes. (\textbf{B}) Correlation with
-Global DockQ for every score computable from one AlphaFold 3
-prediction, over all 126 complexes;
-whiskers are 95\% bootstrap intervals.}
-\end{figure}
-
-\subsection{3.9 What each method takes from the pre-cutoff
+\subsection{3.8 What each method takes from the pre-cutoff
 record}\label{what-each-method-takes-from-the-pre-cutoff-record}
 
 Every target was audited against the 259 TCR--pMHC complexes released on
@@ -993,7 +923,7 @@ versus 4FTV) being the same complex solved twice. Within the benchmark
 the 126 targets collapse to 66 independent clusters.
 
 Accuracy rises with that similarity, but through a narrow channel
-(Figure 6A--C). Peptide and MHC identity to the closest pre-cutoff
+(Figure 5A--C). Peptide and MHC identity to the closest pre-cutoff
 complex predict almost nothing (Spearman \ensuremath{\rho} = +0.04 to +0.20); TCR V\ensuremath{\beta}
 identity predicts a little for every method (+0.29 to +0.37); and the
 concatenated TCR identity separates the methods --- +0.12 for AlphaFold
@@ -1016,7 +946,7 @@ in the best models is approaching the coordinate uncertainty of the
 references themselves.
 
 Sorting the targets by audit class makes the size of the effect concrete
-(Figure 6E--F). Every method is worst on the 42 targets clean of every
+(Figure 5E--F). Every method is worst on the 42 targets clean of every
 criterion and best on the 10 near-duplicates, monotonically across the
 four classes. The median Global DockQ gained on the near-duplicates
 relative to the clean set is +0.16 for AlphaFold 3 (95\% bootstrap CI
@@ -1081,7 +1011,7 @@ with 95\% bootstrap intervals. Shaded bands in A--E are the CAPRI
 quality classes.}
 \end{figure}
 
-\subsection{3.10 Structural divergence between AlphaFold 3 and
+\subsection{3.9 Structural divergence between AlphaFold 3 and
 ESMFold2}\label{structural-divergence-between-alphafold-3-and-esmfold2}
 
 Equal accuracy is not the same as equal predictions. Across the 126
@@ -1139,24 +1069,24 @@ not a failure to recognise the correct one --- a caveat that applies to
 any truncated-input benchmark, and one ESMFold2 appears not to share.
 
 That disagreement is a strong, entirely reference-free predictor of
-accuracy (Figure 7A). Cross-model C\ensuremath{\alpha} RMSD correlates with AlphaFold 3's
+accuracy (Figure 6A). Cross-model C\ensuremath{\alpha} RMSD correlates with AlphaFold 3's
 Global DockQ at Spearman \ensuremath{\rho} = \ensuremath{-}0.756 and with ESMFold2's at \ensuremath{\rho} = \ensuremath{-}0.670,
 and with the \emph{worse} of the two at \ensuremath{\rho} = \ensuremath{-}0.884 (p = 1.1 \ensuremath{\times} 10\ensuremath{^{-}}\ensuremath{^{4}}\ensuremath{^{2}}).
 For comparison, on the same 126 complexes AlphaFold 3's own ipTM
 predicts that worse-of-two value at \ensuremath{\rho} = +0.604 and ESMFold2's at \ensuremath{\rho} =
 +0.639. Cross-architecture agreement is therefore a better native-free
 quality signal than either model's internal confidence, than pDockQ, and
-than the composite and random-forest scores of Section 3.8 --- and it
+than the published random-forest quality-tier classifier --- and it
 requires no confidence head, no training, and no calibration.
 
-By divergence quartile (Figure 7B), median Global DockQ falls from 0.860
+By divergence quartile (Figure 6B), median Global DockQ falls from 0.860
 (AlphaFold 3) and 0.862 (ESMFold2) in the most-agreeing quartile to
 0.518 and 0.564 in the most-divergent one. Notably, the two models
 mostly fail on the \emph{same} complexes: both quartile trends are
 parallel, and among the 20 most divergent complexes, 4 are failed by
 both at the medium threshold while 12 are solved by exactly one.
 
-The residual complementarity is nonetheless substantial (Figure 7C). At
+The residual complementarity is nonetheless substantial (Figure 6C). At
 DockQ \ensuremath{\geq} 0.49, AlphaFold 3 succeeds on 107 of 126 complexes and ESMFold2
 on 115; the two together succeed on 119 (103 both, 4 AlphaFold 3 only,
 12 ESMFold2 only, 7 neither). Pooling an MSA-based and a
@@ -1177,7 +1107,7 @@ on both complexes (AlphaFold 3 ipTM 0.87 and 0.92; ESMFold2 0.81 and
 disagreement does.
 
 Rendering three complexes side by side makes the two failure modes and
-the successful case directly visible (Figure 8). Colour identifies the
+the successful case directly visible (Figure 7). Colour identifies the
 \emph{model}, not the chain: the experimental structure is gray,
 AlphaFold 3 firebrick red and ESMFold2 teal, so the MHC, peptide, TCR\ensuremath{\alpha}
 and TCR\ensuremath{\beta} of one model all carry that model's colour. The first three
@@ -1267,11 +1197,11 @@ complex --- both models reproduce the experimental placement and all
 three structures superimpose.}
 \end{figure}
 
-\subsection{3.11 Denoising trajectories of the two
+\subsection{3.10 Denoising trajectories of the two
 samplers}\label{denoising-trajectories-of-the-two-samplers}
 
 Instrumenting both diffusion samplers on the same complexes shows that
-the equality of outcome conceals very different dynamics (Figure 9A).
+the equality of outcome conceals very different dynamics (Figure 8A).
 AlphaFold 3 begins denoising from an initial noise scale of
 \textasciitilde2,560 \AA{} and is still \textasciitilde44 \AA{} from the native
 at the midpoint of its 200-step schedule; ESMFold2 begins at
@@ -1283,7 +1213,7 @@ AlphaFold 3 spends most of its schedule in a regime where, at the scale
 the noise schedule sets, no structure has settled at all; ESMFold2
 commits early and refines.
 
-The same behaviour at scale (Figure 9B, 30 complexes \ensuremath{\times} 5 samples =
+The same behaviour at scale (Figure 8B, 30 complexes \ensuremath{\times} 5 samples =
 30,000 recorded frames) puts AlphaFold 3's convergence in a narrow
 window. Mean C\ensuremath{\alpha} RMSD to the final frame of the same sample falls below
 2.0 \AA{} at step 150 and below 1.0 \AA{} at step 158; every complex is within
@@ -1294,12 +1224,12 @@ For roughly the first 140 steps the state is noise at the scale the
 schedule sets --- AlphaFold 3's schedule holds \ensuremath{\sigma} above 5 \AA{} until
 \textasciitilde70\% of the way through.
 
-\subsection{3.12 Effect of AlphaFold 3 sampler settings on accuracy and
+\subsection{3.11 Effect of AlphaFold 3 sampler settings on accuracy and
 runtime}\label{effect-of-alphafold-3-sampler-settings-on-accuracy-and-runtime}
 
 If the trajectory has effectively converged by step \textasciitilde160,
 the last 40 steps and the four extra diffusion samples should be nearly
-free to remove. They are (Figure 9C, Table 4). Over the same 30
+free to remove. They are (Figure 8C, Table 4). Over the same 30
 complexes, same MSAs, same seeds, run serially on one idle GPU:
 
 \begin{longtable}[]{@{}
@@ -1481,7 +1411,7 @@ scales roughly quadratically in the pair track while diffusion scales
 with atom count --- so the 1.9\ensuremath{\times} ceiling moves. Within this regime,
 though, the finding is straightforward: for high-throughput TCR--pMHC
 screening the default settings buy almost nothing, and the compute is
-better spent on a second architecture, which Section 3.10 shows is worth
+better spent on a second architecture, which Section 3.9 shows is worth
 considerably more than a fifth diffusion sample.
 
 \subsection{4.5 Implications for benchmark
@@ -1525,11 +1455,9 @@ non-TCR structures the models also saw. The reference set for that
 analysis is only as complete as TCR3d \ensuremath{\cup} STCRDab [15--17]. AlphaFold 3 and
 Protenix were run through public servers, so their exact data pipelines
 are outside our control; ESMFold2 was likewise run through the ESM SDK
-API, and the trajectory analysis of Section 3.11 used the local
+API, and the trajectory analysis of Section 3.10 used the local
 \texttt{biohub/ESMFold2} checkpoint rather than the API model, so its
-per-frame DockQ values are not interchangeable with the benchmark's. The
-composite confidence score of Section 3.8 was developed on this
-benchmark and requires independent validation. Finally, the
+per-frame DockQ values are not interchangeable with the benchmark's. Finally, the
 sampler-economy result is a single-seed, single-GPU, 30-complex
 experiment in one size regime, as stated above.
 
@@ -1562,9 +1490,8 @@ results are provided in long format (one row per interface plus Global
 DockQ), TCR CDR RMSD results per prediction with full coverage and
 quality-control columns, CDR lDDT and pLDDT in long format (one row per
 prediction and region, both contact sets), the sampler-economy tracks with per-complex
-timings and paired differences, and the per-structure confidence features
-and bootstrap intervals behind the composite score of Section 2.10. The
-pre-cutoff audit of Section 3.9 is provided in full --- per-target rules,
+timings and paired differences. The
+pre-cutoff audit of Section 3.8 is provided in full --- per-target rules,
 identities, clusters and recommendations --- together with the scripts
 that regenerate it. All analyses are reproducible from the
 recorded commands; software versions and model checkpoint revisions and
