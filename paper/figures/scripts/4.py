@@ -2,7 +2,7 @@
 
 A  Ca RMSD to the native along the denoising trajectory, AF3 (200 steps) vs ESMFold2 (68),
    on the four complexes traced by layer_probe_trajectories/.
-B  Global DockQ along the same trajectories: when each sampler's interface becomes correct.
+B  Fraction of the native interface present along the same trajectories, both samplers.
 C  Wall-clock vs accuracy for the four sampler tracks (overnight/results/summary.csv).
 """
 import glob, os
@@ -36,35 +36,28 @@ a.legend(frameon=False, loc="lower left")
 a.axhline(10, ls=":", lw=1, c="#888")
 a.text(.02, 11, "10 Å", fontsize=8, color="#666")
 
-# B -- when the interface becomes correct, both samplers
+# B -- when the interface appears: fraction of native contacts recovered
 b = ax[1]
 GRID = np.linspace(0, 1, 201)
-frames = {}
+runs = {}
 for f in sorted(glob.glob(f"{BASE}/layer_probe_trajectories/outputs/*/*/*_diffusion_frames.csv")):
-    d = pd.read_csv(f)
-    if "global_dockq" not in d or d.global_dockq.isna().all():
-        continue                      # 7SG2 has no per-frame DockQ
-    frames.setdefault(d.model.iloc[0], []).append(
-        d.dropna(subset=["global_dockq"]).sort_values("normalized_progress"))
-for m, runs in frames.items():
-    curves = np.vstack([np.interp(GRID, d.normalized_progress, d.global_dockq) for d in runs])
-    for c in curves:                                   # individual complexes, as texture
-        b.plot(GRID, c, color=COL[m], lw=.8, alpha=.3, zorder=2)
+    d = pd.read_csv(f).sort_values("normalized_progress")
+    runs.setdefault(d.model.iloc[0], []).append(d)
+for m, rs in runs.items():
+    curves = np.vstack([np.interp(GRID, d.normalized_progress, d.contact_recall) for d in rs])
+    for c in curves:                                    # individual complexes, as texture
+        b.plot(GRID, c, color=COL[m], lw=.9, alpha=.32, zorder=2)
     med = np.median(curves, axis=0)
-    b.plot(GRID, med, color=COL[m], lw=2.4, zorder=4, label=f"{NAME[m]} (n = {len(runs)})")
-    fin = med[-1]
-    x = GRID[np.argmax(med >= .9 * fin)]               # median crossing of 90% of final
-    b.plot([x], [.9 * fin], "o", color=COL[m], ms=7, mec="white", mew=1.2, zorder=6)
-    b.annotate(f"{x*100:.0f}%", (x, .9 * fin), textcoords="offset points",
-               xytext=(0, 11), ha="center", fontsize=9, color=COL[m], fontweight="bold")
-b.axhline(0.49, ls="--", lw=1, c="#b5545c")
-b.text(.02, .51, "medium", fontsize=8, color="#b5545c")
-b.set_xlabel("fraction of denoising steps"); b.set_ylabel("Global DockQ")
-b.set_ylim(-0.02, 1.0); b.set_xlim(0, 1.02)
-b.set_title(r"$\bf{B}$  When the interface becomes correct", loc="left")
+    b.plot(GRID, med, color=COL[m], lw=2.4, zorder=4, label=f"{NAME[m]} (n = {len(rs)})")
+    x = GRID[np.argmax(med > .05)]                      # first real interface contact
+    b.axvline(x, color=COL[m], ls=":", lw=1.2, zorder=3)
+    b.annotate(f"{x*100:.0f}%", (x, .03), textcoords="offset points", xytext=(4, 0),
+               ha="left", fontsize=9, color=COL[m], fontweight="bold")
+b.set_xlabel("fraction of denoising steps")
+b.set_ylabel("fraction of native interface contacts")
+b.set_ylim(-0.02, 0.82); b.set_xlim(0, 1.02)
+b.set_title(r"$\bf{B}$  When the interface appears", loc="left")
 b.legend(frameon=False, loc="upper left")
-b.text(.98, .03, "markers: 90% of the run's own final DockQ",
-       transform=b.transAxes, ha="right", fontsize=7.5, color="#666")
 
 # C -- time vs accuracy for the four tracks
 c = ax[2]

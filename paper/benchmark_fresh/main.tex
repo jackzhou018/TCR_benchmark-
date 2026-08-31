@@ -217,6 +217,25 @@ sequence --- achieve comparable accuracy, the more informative questions
 concern the route each takes to that accuracy and whether the
 disagreements between them carry usable information.
 
+Four methods are scored on every measure below, but two of them carry
+the comparisons that follow, and it is worth saying why at the outset.
+AlphaFold 3 and ESMFold2 are the two most accurate on this benchmark
+(median Global DockQ 0.751 and 0.736, not separable from each other at p
+= 0.68, and both separating from Protenix), and they are also the pair
+that differs most in what a prediction is conditioned on: AlphaFold 3
+runs a diffusion head on top of a multiple sequence alignment and
+structural templates, while ESMFold2 runs a diffusion head of the same
+generative family on the output of a 6-billion-parameter protein
+language model, with no alignment and no template. Their disagreement
+therefore isolates the contribution of the conditioning rather than of
+the generative architecture. The other two methods are informative but
+not suited to that contrast: Protenix is an open reproduction of the
+AlphaFold 3 architecture, so it shares AlphaFold 3's conditioning as
+well as its generative head, and TCRmodel2 is an AlphaFold 2 derivative
+restricted to class I here. Analyses that need a matched pair --- the
+structural divergence of Section 3.9 and the sampler trajectories of
+Section 3.10 --- therefore use AlphaFold 3 and ESMFold2.
+
 Here we assemble a benchmark of 136 TCR--pMHC entries released after
 30 September 2021, the training cutoff shared by AlphaFold 3, Protenix
 and ESMFold2, of which 126 carry a scoreable experimental reference.
@@ -453,6 +472,18 @@ set (n = 27) is reported separately throughout.
 
 \subsection{2.9 Sampler instrumentation and
 timing}\label{sampler-instrumentation-and-timing}
+
+The benchmark's AlphaFold 3 predictions come from the AlphaFold Server
+(Section 2.3), which returns only final coordinates. Everything in this
+subsection therefore required a second, local installation of AlphaFold
+3, run on one RTX PRO 6000 with the MSAs and templates taken verbatim
+from the server bundles the benchmark's own predictions came from, so
+that the only difference from the scored predictions is the sampler
+instrumentation and the machine. ESMFold2 was likewise run from its
+local \texttt{biohub/ESMFold2} checkpoint rather than through the ESM
+SDK API. Per-frame accuracies from these runs are therefore not
+interchangeable with the benchmark's own DockQ values, and are used only
+to compare the two samplers with each other.
 
 Both models' official samplers were patched observationally to retain
 the coordinate state after every production denoising step, changing no
@@ -1208,9 +1239,21 @@ AlphaFold 3 spends most of its schedule in a regime where, at the scale
 the noise schedule sets, no structure has settled at all; ESMFold2
 commits early and refines.
 
-The same behaviour at scale (Figure 8B, 30 complexes \ensuremath{\times} 5 samples =
-30,000 recorded frames) puts AlphaFold 3's convergence in a narrow
-window. Mean C\ensuremath{\alpha} RMSD to the final frame of the same sample falls below
+The same trajectories say when each sampler actually builds the
+interface, which is the part of the structure this benchmark scores
+(Figure 8B). Counting the fraction of native interface contacts present
+at each step, the median AlphaFold 3 run has no native contact at all
+until 58\% of its schedule and acquires most of its interface between
+60\% and 80\%; the median ESMFold2 run has its first native contact at
+40\% and is within a few percent of its final interface by 60\%. The
+two samplers therefore differ not only in when coordinates stop moving
+but in when the interface exists to be scored: ESMFold2 spends the back
+half of its schedule refining an interface it has already made, and
+AlphaFold 3 spends the front half without one.
+
+The same behaviour at scale --- the 30 complexes \ensuremath{\times} 5 samples of the
+sampler-economy runs, 30,000 recorded frames --- puts AlphaFold 3's
+convergence in a narrow window. Mean C\ensuremath{\alpha} RMSD to the final frame of the same sample falls below
 2.0 \AA{} at step 150 and below 1.0 \AA{} at step 158; every complex is within
 1.0 \AA{} by step 159; accuracy against the native plateaus at 3.37 \AA{} around
 step 163; and mean RMSD to the final frame falls below 0.5 \AA{} at step
@@ -1312,15 +1355,16 @@ because extra seeds bought more accuracy than extra samples [37].
 
 \begin{figure}
 \centering
-\includegraphics[width=1\linewidth,height=\textheight,keepaspectratio,alt={Denoising trajectories and AlphaFold 3 sampler economy. (A) C\ensuremath{\alpha} RMSD to the native along the denoising trajectory for four complexes traced in both models; AlphaFold 3 (200 steps, initial \ensuremath{\sigma} \ensuremath{\approx} 2,560 \AA{}) is still tens of \aa{}ngströms out at its midpoint, ESMFold2 (68 recorded steps, initial \ensuremath{\sigma} \ensuremath{\approx} 256 \AA{}) is within a few \aa{}ngströms. (B) AlphaFold 3 convergence to its own final frame over 30 complexes \ensuremath{\times} 5 samples; band spans median to 90th percentile. (C) GPU time against mean Global DockQ for four sampler configurations on the same 30 complexes.}]{Figure_sampler.png}
+\includegraphics[width=1\linewidth,height=\textheight,keepaspectratio,alt={Denoising trajectories and AlphaFold 3 sampler economy. (A) C\ensuremath{\alpha} RMSD to the native along the denoising trajectory for four complexes traced in both models; AlphaFold 3 (200 steps, initial \ensuremath{\sigma} \ensuremath{\approx} 2,560 \AA{}) is still tens of \aa{}ngströms out at its midpoint, ESMFold2 (68 recorded steps, initial \ensuremath{\sigma} \ensuremath{\approx} 256 \AA{}) is within a few \aa{}ngströms. (B) Fraction of the native interface contacts present along the same trajectories, both models; thin lines are individual complexes, thick lines the median, and the dotted verticals mark where the median run acquires its first native contact. (C) GPU time against mean Global DockQ for four sampler configurations on the same 30 complexes.}]{Figure_sampler.png}
 \caption{\textbf{Denoising trajectories and AlphaFold 3 sampler
 economy.} (\textbf{A}) C\ensuremath{\alpha} RMSD to the native along the denoising
 trajectory for four complexes traced in both models; AlphaFold 3 (200
 steps, initial \ensuremath{\sigma} \ensuremath{\approx} 2,560 \AA{}) is still tens of \aa{}ngströms out at its
 midpoint, ESMFold2 (68 recorded steps, initial \ensuremath{\sigma} \ensuremath{\approx} 256 \AA{}) is within a
-few \aa{}ngströms. (\textbf{B}) AlphaFold 3 convergence to its own final
-frame over 30 complexes \ensuremath{\times} 5 samples; band spans median to 90th
-percentile. (\textbf{C}) GPU time against mean Global DockQ for four
+few \aa{}ngströms. (\textbf{B}) Fraction of the native interface
+contacts present along the same trajectories; thin lines are individual
+complexes, thick lines the median of four, and the dotted verticals mark
+where the median run acquires its first native contact. (\textbf{C}) GPU time against mean Global DockQ for four
 sampler configurations on the same 30 complexes.}
 \end{figure}
 
