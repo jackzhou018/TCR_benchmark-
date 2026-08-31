@@ -287,8 +287,7 @@ idiosyncratic remainder (Section 3.8). Instead, similarity to the
 pre-cutoff structural record is measured explicitly and treated as a
 covariate.
 
-\subsection{2.2 Domain truncation and chain
-convention}\label{domain-truncation-and-chain-convention}
+\subsection{2.2 Domain truncation}\label{domain-truncation}
 
 Each complex was truncated to the domains that constitute the variable
 regions of the TCR--pMHC interface (Figure 1) --- the same reduction to
@@ -300,11 +299,6 @@ residues, range 161--181); for class II, the \ensuremath{\alpha}1 and \ensuremat
 retained (81--85 and 89--93 residues). TCR chains were cut to their
 variable domains (\ensuremath{\alpha} 101--114 residues, \ensuremath{\beta} 105--116). Prediction inputs
 used the complete deposited polymer sequences over those spans.
-
-Every method received the same chain letters, with no per-model
-remapping anywhere in the pipeline: for class I, MHC \ensuremath{\alpha}1\ensuremath{\alpha}2 (A), peptide
-(B), TCR\ensuremath{\alpha} (C) and TCR\ensuremath{\beta} (D); for class II, MHC-II\ensuremath{\alpha} (A), peptide (B),
-MHC-II\ensuremath{\beta} (C), TCR\ensuremath{\alpha} (D) and TCR\ensuremath{\beta} (E).
 
 \begin{figure}[H]
 \centering
@@ -358,7 +352,7 @@ was therefore run on class I only, giving 111 predictions.
 
 Mean end-to-end runtimes were 5.2 s per complex for the ESMFold2 API
 (median, IQR 4.9--6.4 s) and 13.4 s per complex for a local AlphaFold 3
-run at default sampler settings on one RTX PRO 6000 (Section 2.9).
+run at default sampler settings on one RTX PRO 6000 (Section 2.8).
 
 \subsection{2.4 Interface accuracy}\label{interface-accuracy}
 
@@ -431,26 +425,7 @@ docked, and against the CDR's own TCR chain alone, which removes the
 docking and leaves local loop geometry. Whole-chain, peptide, MHC and
 whole-complex lDDT are reported alongside for context.
 
-\subsection{2.7 Metric validation and quality
-control}\label{metric-validation-and-quality-control}
-
-Every metric reports expected, matched and resolved residue counts, atom
-counts, coverage fraction and a pass/fail status; incomplete loops are
-kept separate from the complete-case analysis rather than silently
-scored. Validation tests confirm that a native scored against itself,
-and against a rigidly rotated and translated copy of itself, returns
-approximately zero; that displacing an intact TCR relative to a fixed
-MHC raises the MHC-aligned CDR RMSD while leaving framework-aligned CDR3
-RMSDs near zero; that deforming a CDR3 loop raises its own
-framework-aligned RMSD; and that permuting chain identifiers changes
-nothing, because chain assignment is by sequence and biological role. The
-lDDT implementation is checked against biotite's implementation of
-Mariani et al.~to within $10^{-6}$, returns 1 for a structure
-scored against itself and against a rigidly rotated and translated copy of
-itself, and is unaffected by rigid motion of a group lying outside the
-15~\AA{} inclusion radius.
-
-\subsection{2.8 Confidence and reference-free quality
+\subsection{2.7 Confidence and reference-free quality
 scores}\label{confidence-and-reference-free-quality-scores}
 
 Each method's own interface confidence (ipTM, introduced with
@@ -470,13 +445,17 @@ benchmark's chain convention and scored on all 126 complexes; the subset
 of class I targets whose PDB identifiers do not appear in its training
 set (n = 27) is reported separately throughout.
 
-\subsection{2.9 Sampler instrumentation and
-timing}\label{sampler-instrumentation-and-timing}
+\subsection{2.8 Diffusion-step instrumentation and sampler
+timing}\label{diffusion-step-instrumentation-and-sampler-timing}
 
-The benchmark's AlphaFold 3 predictions come from the AlphaFold Server
-(Section 2.3), which returns only final coordinates. Everything in this
-subsection therefore required a second, local installation of AlphaFold
-3, run on one RTX PRO 6000 with the MSAs and templates taken verbatim
+Two of the analyses below need to see inside the diffusion loop rather
+than only the structure it returns: the per-step denoising trajectories
+of Section 3.10, which compare how the two samplers approach their
+answer, and the sampler-economy comparison of Section 3.11, which asks
+how many diffusion steps and samples that answer actually needs. The
+benchmark's AlphaFold 3 predictions come from the AlphaFold Server
+(Section 2.3), which returns only final coordinates. Both experiments
+therefore required a second, local installation of AlphaFold 3, run on one RTX PRO 6000 with the MSAs and templates taken verbatim
 from the server bundles the benchmark's own predictions came from, so
 that the only difference from the scored predictions is the sampler
 instrumentation and the machine. ESMFold2 was likewise run from its
@@ -507,7 +486,7 @@ warm-up predictions run and discarded before timing. Instrumentation
 costs \textasciitilde2\% and was run as a separate pass, so the baseline
 track is stock AlphaFold 3.
 
-\subsection{2.10 Statistics and software}\label{statistics-and-software}
+\subsection{2.9 Statistics and software}\label{statistics-and-software}
 
 Paired method comparisons use the Wilcoxon signed-rank test on the
 complexes both methods predicted. Correlations are Pearson and Spearman
