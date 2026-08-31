@@ -566,69 +566,44 @@ MHC-II\ensuremath{\alpha}--MHC-II\ensuremath{\beta} heterodimer pairing itself a
 against 0.845 for ESMFold2 and 0.789 for Protenix, the single largest
 per-interface deficit for AlphaFold 3 in the table.
 
-\begin{longtable}[]{@{}
-  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.4444}}
-  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.0741}}
-  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.0988}}
-  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1235}}
-  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1235}}
-  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1358}}@{}}
-\caption{\textbf{Median per-interface DockQ by method.} \emph{n} is the
-number of complexes contributing that interface (an interface with no
-native contacts is not scored, so peptide--TCR interfaces are absent in
-a few complexes whose TCR does not touch the peptide). The final row
-collapses the four TCR-versus-pMHC interfaces to one value per complex,
-then takes the median over complexes.}\tabularnewline
-\toprule\noalign{}
-\begin{minipage}[b]{\linewidth}\raggedright
-Interface
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-\emph{n}
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-AF3
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-Protenix
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-ESMFold2
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-TCRmodel2
-\end{minipage} \\
-\midrule\noalign{}
-\endfirsthead
-\toprule\noalign{}
-\begin{minipage}[b]{\linewidth}\raggedright
-Interface
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-\emph{n}
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-AF3
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-Protenix
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-ESMFold2
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-TCRmodel2
-\end{minipage} \\
-\midrule\noalign{}
-\endhead
-\bottomrule\noalign{}
-\endlastfoot
-MHC-I -- peptide & 111 & 0.940 & 0.933 & 0.939 & 0.931 \\
-MHC-II\ensuremath{\alpha} -- peptide & 15 & 0.904 & 0.911 & 0.905 & --- \\
-peptide -- MHC-II\ensuremath{\beta} & 15 & 0.909 & 0.887 & 0.902 & --- \\
-TCR\ensuremath{\alpha} -- TCR\ensuremath{\beta} & 126 & 0.798 & 0.800 & 0.821 & 0.791 \\
-MHC-II\ensuremath{\alpha} -- MHC-II\ensuremath{\beta} & 15 & 0.628 & 0.789 & 0.845 & --- \\
-MHC-I -- TCR\ensuremath{\alpha} & 111 & 0.672 & 0.590 & 0.653 & 0.644 \\
-MHC-I -- TCR\ensuremath{\beta} & 110 & 0.686 & 0.551 & 0.696 & 0.611 \\
-peptide -- TCR\ensuremath{\alpha} & 120 & 0.710 & 0.605 & 0.676 & 0.641 \\
-peptide -- TCR\ensuremath{\beta} & 122 & 0.687 & 0.633 & 0.690 & 0.681 \\
-MHC-II\ensuremath{\alpha} -- TCR\ensuremath{\alpha} & 11 & 0.615 & 0.600 & 0.714 & --- \\
-MHC-II\ensuremath{\alpha} -- TCR\ensuremath{\beta} & 12 & 0.773 & 0.767 & 0.839 & --- \\
-MHC-II\ensuremath{\beta} -- TCR\ensuremath{\alpha} & 15 & 0.720 & 0.687 & 0.819 & --- \\
-MHC-II\ensuremath{\beta} -- TCR\ensuremath{\beta} & 15 & 0.719 & 0.519 & 0.764 & --- \\
-\textbf{All TCR--pMHC interfaces (per complex)} & 126 & \textbf{0.692} &
-\textbf{0.621} & \textbf{0.694} & \textbf{0.632} \\
-\end{longtable}
+\begin{table}[H]
+\centering
+\caption{\textbf{Median DockQ per interface.} Higher is better; the best
+method in each row is bold. \emph{n} is the number of complexes that
+contribute the interface --- an interface with no native contacts is not
+scored, which is why the peptide--TCR rows fall short of 126. TCRmodel2
+predicts class I only (---). The final row collapses the four
+TCR-versus-pMHC interfaces of a complex to a single value before taking
+the median, and is the row the text refers to.}
+\label{tab:interfaces}
+\small
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+Interface & \emph{n} & AlphaFold 3 & Protenix & ESMFold2 & TCRmodel2 \\
+\midrule
+\multicolumn{6}{@{}l}{\emph{Peptide in the groove}} \\
+MHC-I -- peptide            & 111 & \textbf{0.940} & 0.933 & 0.939 & 0.931 \\
+MHC-II\ensuremath{\alpha} -- peptide  & 15  & 0.904 & \textbf{0.911} & 0.905 & --- \\
+peptide -- MHC-II\ensuremath{\beta}  & 15  & \textbf{0.909} & 0.887 & 0.902 & --- \\
+\addlinespace
+\multicolumn{6}{@{}l}{\emph{Chain pairing within a module}} \\
+TCR\ensuremath{\alpha} -- TCR\ensuremath{\beta}      & 126 & 0.798 & 0.800 & \textbf{0.821} & 0.791 \\
+MHC-II\ensuremath{\alpha} -- MHC-II\ensuremath{\beta} & 15  & 0.628 & 0.789 & \textbf{0.845} & --- \\
+\addlinespace
+\multicolumn{6}{@{}l}{\emph{TCR against pMHC}} \\
+MHC-I -- TCR\ensuremath{\alpha}       & 111 & \textbf{0.672} & 0.590 & 0.653 & 0.644 \\
+MHC-I -- TCR\ensuremath{\beta}       & 110 & 0.686 & 0.551 & \textbf{0.696} & 0.611 \\
+peptide -- TCR\ensuremath{\alpha}     & 120 & \textbf{0.710} & 0.605 & 0.676 & 0.641 \\
+peptide -- TCR\ensuremath{\beta}     & 122 & 0.687 & 0.633 & \textbf{0.690} & 0.681 \\
+MHC-II\ensuremath{\alpha} -- TCR\ensuremath{\alpha}  & 11  & 0.615 & 0.600 & \textbf{0.714} & --- \\
+MHC-II\ensuremath{\alpha} -- TCR\ensuremath{\beta}  & 12  & 0.773 & 0.767 & \textbf{0.839} & --- \\
+MHC-II\ensuremath{\beta} -- TCR\ensuremath{\alpha}  & 15  & 0.720 & 0.687 & \textbf{0.819} & --- \\
+MHC-II\ensuremath{\beta} -- TCR\ensuremath{\beta}  & 15  & 0.719 & 0.519 & \textbf{0.764} & --- \\
+\midrule
+All TCR--pMHC interfaces, per complex & 126 & 0.692 & 0.621 & \textbf{0.694} & 0.632 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 Collapsing those four interfaces to one value per complex, median
 TCR-versus-pMHC DockQ is 0.694 for ESMFold2, 0.692 for AlphaFold 3,
@@ -644,59 +619,31 @@ conformation}\label{tcr-specific-accuracy-docking-versus-cdr3-loop-conformation}
 
 The two TCR-specific metrics decompose that residual error (Table 2).
 
-\begin{longtable}[]{@{}
-  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.3793}}
-  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.1552}}
-  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.1552}}
-  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.1552}}
-  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.1552}}@{}}
-\caption{\textbf{TCR-specific structural accuracy, median (IQR) in
-\aa{}ngströms, class I and II pooled.} The MHC-aligned metric applies one
-rigid superposition of the predicted MHC peptide-binding platform onto
-the native and then measures all eight CDRs with CDR3 residues weighted
-3, so it reports docking accuracy. The framework-aligned metrics fit
-each TCR chain's variable-domain framework independently and then
-measure the CDR3 loop, so they report loop accuracy independent of
-docking. TCRmodel2 is scored on its 111 class I
-predictions.}\tabularnewline
-\toprule\noalign{}
-\begin{minipage}[b]{\linewidth}\raggedright
-Metric
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-AF3
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Protenix
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-ESMFold2
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-TCRmodel2
-\end{minipage} \\
-\midrule\noalign{}
-\endfirsthead
-\toprule\noalign{}
-\begin{minipage}[b]{\linewidth}\raggedright
-Metric
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-AF3
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Protenix
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-ESMFold2
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-TCRmodel2
-\end{minipage} \\
-\midrule\noalign{}
-\endhead
-\bottomrule\noalign{}
-\endlastfoot
-MHC-aligned weighted all-CDR C\ensuremath{\alpha} RMSD & 2.84 (1.61-5.56) & 3.82
-(2.10-7.47) & 2.75 (1.60-5.24) & 3.47 (1.99-5.16) \\
-Framework-aligned CDR3\ensuremath{\alpha} all-atom RMSD & 1.94 (1.35-2.88) & 2.33
-(1.53-3.08) & 1.81 (1.25-2.59) & 2.02 (1.47-3.08) \\
-Framework-aligned CDR3\ensuremath{\beta} all-atom RMSD & 1.73 (1.17-2.49) & 1.93
-(1.40-2.60) & 1.56 (1.13-2.26) & 1.95 (1.42-2.70) \\
-\emph{n} complexes & 126 & 126 & 126 & 111 \\
-\end{longtable}
+\begin{table}[H]
+\centering
+\caption{\textbf{TCR-specific accuracy.} C\ensuremath{\alpha} or all-atom RMSD in
+\aa{}ngstr\"oms, median (interquartile range); lower is better and the best
+method in each row is bold. Class I and II are pooled. The MHC-aligned
+metric applies one rigid superposition of the predicted peptide-binding
+platform onto the native and then measures all eight CDRs with CDR3
+weighted 3, so it reports \emph{docking}. The framework-aligned metrics
+fit each chain's variable-domain framework independently before
+measuring its CDR3 loop, so they report \emph{loop conformation} with the
+docking removed.}
+\label{tab:tcr-rmsd}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+& AlphaFold 3 & Protenix & ESMFold2 & TCRmodel2 \\
+Metric (\aa{}) & \emph{n} = 126 & \emph{n} = 126 & \emph{n} = 126 & \emph{n} = 111 \\
+\midrule
+MHC-aligned, all CDRs, C\ensuremath{\alpha}   & 2.84 (1.61--5.56) & 3.82 (2.10--7.47) & \textbf{2.75 (1.60--5.24)} & 3.47 (1.99--5.16) \\
+Framework-aligned CDR3\ensuremath{\alpha}, all atom & 1.94 (1.35--2.88) & 2.33 (1.53--3.08) & \textbf{1.81 (1.25--2.59)} & 2.02 (1.47--3.08) \\
+Framework-aligned CDR3\ensuremath{\beta}, all atom & 1.73 (1.17--2.49) & 1.93 (1.40--2.60) & \textbf{1.56 (1.13--2.26)} & 1.95 (1.42--2.70) \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 The MHC-aligned weighted all-CDR C\ensuremath{\alpha} RMSD, which measures docking with no
 second fit, has a median of 2.75 \AA{} for ESMFold2, 2.84 \AA{} for AlphaFold 3
@@ -749,58 +696,39 @@ whole complex, and the CDR's own TCR chain alone (Table 3, Figure 3).
 
 {\footnotesize
 \setlength{\tabcolsep}{4pt}
-\begin{longtable}[]{@{}
-  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
-  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
-  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
-  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
-  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}@{}}
-\caption{\textbf{CDR lDDT and pLDDT, median (IQR), class I and II
-pooled.} lDDT is superposition-free and bounded in [0, 1]; higher is
-better. ``Whole complex'' uses every chain as contact partners, so the
-score falls when the TCR is docked in the wrong place; ``own chain''
-restricts the partners to the TCR chain the loop sits on, which removes
-the docking. pLDDT is each method's own per-residue confidence over the same
-residues, rescaled to [0, 1].}\tabularnewline
-\toprule\noalign{}
-\begin{minipage}[b]{\linewidth}\raggedright
-Region and contact set
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-AF3
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Protenix
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-ESMFold2
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-TCRmodel2
-\end{minipage} \\
-\midrule\noalign{}
-\endfirsthead
-\toprule\noalign{}
-\begin{minipage}[b]{\linewidth}\raggedright
-Region and contact set
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-AF3
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Protenix
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-ESMFold2
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-TCRmodel2
-\end{minipage} \\
-\midrule\noalign{}
-\endhead
-\bottomrule\noalign{}
-\endlastfoot
-All CDRs, complex & 0.866 (0.793--0.907) & 0.844 (0.784--0.891) & 0.872 (0.819--0.911) & 0.852 (0.806--0.893) \\
-All CDRs, own chain & 0.921 (0.884--0.948) & 0.916 (0.883--0.939) & 0.932 (0.894--0.956) & 0.920 (0.886--0.943) \\
-CDR3\ensuremath{\alpha}, complex & 0.824 (0.714--0.899) & 0.787 (0.720--0.870) & 0.835 (0.733--0.894) & 0.792 (0.735--0.881) \\
-CDR3\ensuremath{\beta}, complex & 0.842 (0.773--0.918) & 0.824 (0.745--0.898) & 0.849 (0.783--0.934) & 0.819 (0.769--0.890) \\
-Framework, complex & 0.961 (0.944--0.970) & 0.958 (0.948--0.969) & 0.960 (0.949--0.971) & 0.961 (0.948--0.971) \\
-Whole complex & 0.935 (0.914--0.957) & 0.931 (0.909--0.949) & 0.940 (0.922--0.955) & 0.942 (0.918--0.951) \\
-Mean CDR3 pLDDT & 0.874 (0.796--0.920) & 0.890 (0.840--0.939) & 0.784 (0.718--0.821) & 0.826 (0.783--0.865) \\
-\emph{n} complexes & 126 & 126 & 126 & 111 \\
-\end{longtable}
+\begin{table}[H]
+\centering
+\caption{\textbf{CDR lDDT and the models' own pLDDT.} Median
+(interquartile range), class I and II pooled. lDDT is
+superposition-free and bounded in [0, 1]; higher is better and the best
+method in each accuracy row is bold. The contact set is what the score
+is allowed to see: \emph{complex} admits every chain, so the score falls
+when the TCR is docked in the wrong place, while \emph{own chain}
+admits only the TCR chain the loop sits on, which removes the docking
+and leaves local geometry. The last row is not an accuracy: it is each
+method's own per-residue confidence over the same residues, rescaled to
+[0, 1], and is bold nowhere because a higher value is only better if it
+is true.}
+\label{tab:lddt}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}llcccc@{}}
+\toprule
+& & AlphaFold 3 & Protenix & ESMFold2 & TCRmodel2 \\
+Region & Contact set & \emph{n} = 126 & \emph{n} = 126 & \emph{n} = 126 & \emph{n} = 111 \\
+\midrule
+All CDRs   & complex   & 0.866 (0.79--0.91) & 0.844 (0.78--0.89) & \textbf{0.872 (0.82--0.91)} & 0.852 (0.81--0.89) \\
+All CDRs   & own chain & 0.921 (0.88--0.95) & 0.916 (0.88--0.94) & \textbf{0.932 (0.89--0.96)} & 0.920 (0.89--0.94) \\
+CDR3\ensuremath{\alpha}     & complex   & 0.824 (0.71--0.90) & 0.787 (0.72--0.87) & \textbf{0.835 (0.73--0.89)} & 0.792 (0.73--0.88) \\
+CDR3\ensuremath{\beta}     & complex   & 0.842 (0.77--0.92) & 0.824 (0.74--0.90) & \textbf{0.849 (0.78--0.93)} & 0.819 (0.77--0.89) \\
+Framework  & complex   & \textbf{0.961 (0.94--0.97)} & 0.958 (0.95--0.97) & 0.960 (0.95--0.97) & \textbf{0.961 (0.95--0.97)} \\
+Whole complex & complex & 0.935 (0.91--0.96) & 0.931 (0.91--0.95) & 0.940 (0.92--0.95) & \textbf{0.942 (0.92--0.95)} \\
+\addlinespace
+\multicolumn{6}{@{}l}{\emph{Confidence, not accuracy}} \\
+Mean CDR3 pLDDT & --- & 0.874 (0.80--0.92) & 0.890 (0.84--0.94) & 0.784 (0.72--0.82) & 0.826 (0.78--0.86) \\
+\bottomrule
+\end{tabular}
+\end{table}
 }
 
 Within a method, all-CDR lDDT in the whole-complex frame is very nearly a
@@ -1249,66 +1177,29 @@ the last 40 steps and the four extra diffusion samples should be nearly
 free to remove. They are (Figure 8C, Table 4). Over the same 30
 complexes, same MSAs, same seeds, run serially on one idle GPU:
 
-\begin{longtable}[]{@{}
-  >{\raggedright\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1092}}
-  >{\raggedright\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1429}}
-  >{\raggedright\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1849}}
-  >{\raggedleft\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.0924}}
-  >{\raggedleft\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1597}}
-  >{\raggedright\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.2101}}
-  >{\raggedleft\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1008}}@{}}
+\begin{table}[H]
+\centering
 \caption{\textbf{AlphaFold 3 sampler economy on 30 complexes.} Same
 complexes, same MSAs and templates, same per-complex seed, run serially
-on one idle RTX PRO 6000. Confidence intervals are paired bootstrap;
-\emph{p} values are paired tests against the baseline track. GPU seconds
-are mean \ensuremath{\pm} SD over the 30 complexes and exclude a constant 3.3 s of CPU
-featurisation.}\tabularnewline
-\toprule\noalign{}
-\begin{minipage}[b]{\linewidth}\raggedright
-Track
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Steps \ensuremath{\times} samples
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-GPU s per prediction
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-Speed-up
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-Mean Global DockQ
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-\ensuremath{\Delta} vs baseline (95\% CI)
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-Paired \emph{p}
-\end{minipage} \\
-\midrule\noalign{}
-\endfirsthead
-\toprule\noalign{}
-\begin{minipage}[b]{\linewidth}\raggedright
-Track
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Steps \ensuremath{\times} samples
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-GPU s per prediction
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-Speed-up
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-Mean Global DockQ
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-\ensuremath{\Delta} vs baseline (95\% CI)
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-Paired \emph{p}
-\end{minipage} \\
-\midrule\noalign{}
-\endhead
-\bottomrule\noalign{}
-\endlastfoot
-Baseline & 200 \ensuremath{\times} 5 & 10.04 \ensuremath{\pm} 0.03 & 1.00\ensuremath{\times} & 0.7212 & --- & --- \\
-Fewer steps & 160 \ensuremath{\times} 5 & 8.79 \ensuremath{\pm} 0.03 & 1.14\ensuremath{\times} & 0.7143 & \ensuremath{-}0.007 (\ensuremath{-}0.026,
-+0.007) & 0.43 \\
-One sample & 200 \ensuremath{\times} 1 & 6.02 \ensuremath{\pm} 0.01 & 1.67\ensuremath{\times} & 0.7143 & \ensuremath{-}0.007 (\ensuremath{-}0.021,
-+0.006) & 0.34 \\
-Both & 160 \ensuremath{\times} 1 & 5.57 \ensuremath{\pm} 0.01 & \textbf{1.80\ensuremath{\times}} & 0.7109 & \ensuremath{-}0.010 (\ensuremath{-}0.032,
-+0.007) & 0.33 \\
-\end{longtable}
+on one idle RTX PRO 6000. GPU seconds are mean \ensuremath{\pm} SD over the 30
+complexes and exclude a constant 3.3 s of CPU featurisation. \ensuremath{\Delta} is the
+paired change in mean Global DockQ against the baseline track, with a
+95\% paired-bootstrap interval; \emph{p} is a paired test against the
+same baseline. Every interval includes zero.}
+\label{tab:sampler}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}llrrrlr@{}}
+\toprule
+Track & Steps \ensuremath{\times} samples & GPU s & Speed-up & Global DockQ & \ensuremath{\Delta} (95\% CI) & \emph{p} \\
+\midrule
+Baseline    & 200 \ensuremath{\times} 5 & 10.04 \ensuremath{\pm} 0.03 & 1.00\ensuremath{\times} & 0.7212 & --- & --- \\
+Fewer steps & 160 \ensuremath{\times} 5 & 8.79 \ensuremath{\pm} 0.03 & 1.14\ensuremath{\times} & 0.7143 & \ensuremath{-}0.007 (\ensuremath{-}0.026, +0.007) & 0.43 \\
+One sample  & 200 \ensuremath{\times} 1 & 6.02 \ensuremath{\pm} 0.01 & 1.67\ensuremath{\times} & 0.7143 & \ensuremath{-}0.007 (\ensuremath{-}0.021, +0.006) & 0.34 \\
+Both        & 160 \ensuremath{\times} 1 & 5.57 \ensuremath{\pm} 0.01 & \textbf{1.80\ensuremath{\times}} & 0.7109 & \ensuremath{-}0.010 (\ensuremath{-}0.032, +0.007) & 0.33 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 Every confidence interval straddles zero, no track loses a complex from
 the acceptable band (30/30 everywhere), and the high-accuracy fraction
