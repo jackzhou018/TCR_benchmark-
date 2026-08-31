@@ -339,7 +339,7 @@ was therefore run on class I only, giving 111 predictions.
 
 Mean end-to-end runtimes were 5.2 s per complex for the ESMFold2 API
 (median, IQR 4.9--6.4 s) and 13.4 s per complex for a local AlphaFold 3
-run at default sampler settings on one RTX PRO 6000 (Section 2.10).
+run at default sampler settings on one RTX PRO 6000 (Section 2.9).
 
 \subsection{2.4 Interface accuracy}\label{interface-accuracy}
 
@@ -352,23 +352,18 @@ Standard CAPRI thresholds are used throughout (\textless{} 0.23
 incorrect, 0.23--0.49 acceptable, 0.49--0.80 medium, \ensuremath{\geq} 0.80 high)
 [32,34].
 
-\subsection{2.5 CDR annotation}\label{cdr-annotation}
-
-TCR\ensuremath{\alpha} and TCR\ensuremath{\beta} chains were annotated once per
-biological sequence with ANARCI [35] under IMGT numbering [36],
-and the annotation propagated to prediction and native coordinates
-through pairwise sequence alignment rather than through PDB residue
-numbering. CDR ranges were the inclusive IMGT intervals 27--38 (CDR1),
-56--65 (CDR2), 81--86 (CDR2.5) and 104--118 (CDR3), the same intervals
-used by Woods et al. [37]; ``all CDRs'' means all four regions on both
-chains, eight in total.
-
-\subsection{2.6 TCR-specific RMSD
+\subsection{2.5 TCR-specific RMSD
 metrics}\label{tcr-specific-rmsd-metrics}
 
 Two TCR-specific metrics were computed on the same top-ranked
 predictions the DockQ workflow scores; predictions were never selected
-using a native RMSD. The first, the MHC-aligned weighted all-CDR C\ensuremath{\alpha} RMSD, follows the TCRdock
+using a native RMSD. TCR\ensuremath{\alpha} and TCR\ensuremath{\beta} chains were annotated once per
+biological sequence with ANARCI [35] under IMGT numbering [36], and the
+annotation propagated to prediction and native coordinates by pairwise
+sequence alignment rather than by PDB residue numbering; CDRs are the
+inclusive IMGT intervals 27--38 (CDR1), 56--65 (CDR2), 81--86 (CDR2.5)
+and 104--118 (CDR3) of Woods et al. [37], and ``all CDRs'' means all
+four regions on both chains, eight in total. The first, the MHC-aligned weighted all-CDR C\ensuremath{\alpha} RMSD, follows the TCRdock
 formulation [22,37]. MHC residues are matched between prediction and
 native by sequence alignment; a single ordinary-least-squares Kabsch
 superposition of the class I peptide-binding platform (or, jointly, of
@@ -391,7 +386,7 @@ over the corresponding CDR3 loop without further alignment, comparing
 only identically named atoms in sequence-matched, identity-matched
 residues. C\ensuremath{\alpha}-only versions are retained as quality-control columns.
 
-\subsection{2.7 Superposition-free CDR accuracy
+\subsection{2.6 Superposition-free CDR accuracy
 (lDDT)}\label{superposition-free-cdr-accuracy-lddt}
 
 Both metrics above answer their question through a superposition, and
@@ -417,7 +412,7 @@ docked, and against the CDR's own TCR chain alone, which removes the
 docking and leaves local loop geometry. Whole-chain, peptide, MHC and
 whole-complex lDDT are reported alongside for context.
 
-\subsection{2.8 Metric validation and quality
+\subsection{2.7 Metric validation and quality
 control}\label{metric-validation-and-quality-control}
 
 Every metric reports expected, matched and resolved residue counts, atom
@@ -436,7 +431,7 @@ scored against itself and against a rigidly rotated and translated copy of
 itself, and is unaffected by rigid motion of a group lying outside the
 15~\AA{} inclusion radius.
 
-\subsection{2.9 Confidence and reference-free quality
+\subsection{2.8 Confidence and reference-free quality
 scores}\label{confidence-and-reference-free-quality-scores}
 
 Each method's own interface confidence (ipTM, introduced with
@@ -446,7 +441,7 @@ confidence introduced with AlphaFold 2 [19], was read from the B-factor column o
 scored, averaged over a residue's non-hydrogen atoms and then over a
 region; all four methods write it on the 0--100 scale here, and anything
 reported in [0, 1] is rescaled. Confidence is therefore compared with
-accuracy residue-for-residue over exactly the residue sets of Section 2.7,
+accuracy residue-for-residue over exactly the residue sets of Section 2.6,
 and the calibration error reported is the mean of pLDDT − lDDT over
 complexes. pDockQ [40] was computed
 per interface from the predicted structure and per-residue confidence,
@@ -456,7 +451,7 @@ benchmark's chain convention and scored on all 126 complexes; the subset
 of class I targets whose PDB identifiers do not appear in its training
 set (n = 27) is reported separately throughout.
 
-\subsection{2.10 Sampler instrumentation and
+\subsection{2.9 Sampler instrumentation and
 timing}\label{sampler-instrumentation-and-timing}
 
 Both models' official samplers were patched observationally to retain
@@ -481,7 +476,7 @@ warm-up predictions run and discarded before timing. Instrumentation
 costs \textasciitilde2\% and was run as a separate pass, so the baseline
 track is stock AlphaFold 3.
 
-\subsection{2.11 Statistics and software}\label{statistics-and-software}
+\subsection{2.10 Statistics and software}\label{statistics-and-software}
 
 Paired method comparisons use the Wilcoxon signed-rank test on the
 complexes both methods predicted. Correlations are Pearson and Spearman

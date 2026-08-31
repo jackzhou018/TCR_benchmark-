@@ -2,7 +2,7 @@
 
 A  Ca RMSD to the native along the denoising trajectory, AF3 (200 steps) vs ESMFold2 (68),
    on the four complexes traced by layer_probe_trajectories/.
-B  AF3 convergence to its own final frame, 30 complexes x 5 samples (overnight/).
+B  Global DockQ along the same trajectories: when each sampler's interface becomes correct.
 C  Wall-clock vs accuracy for the four sampler tracks (overnight/results/summary.csv).
 """
 import glob, os
@@ -36,19 +36,35 @@ a.legend(frameon=False, loc="lower left")
 a.axhline(10, ls=":", lw=1, c="#888")
 a.text(.02, 11, "10 Å", fontsize=8, color="#666")
 
-# B -- AF3 convergence to its own final frame
+# B -- when the interface becomes correct, both samplers
 b = ax[1]
-t = pd.read_csv(f"{BASE}/overnight/results/traj_rmsd_mean.csv")
-b.plot(t.step, t.ca_rmsd_to_final_mean, color=BASE_COLORS["AF3"], lw=1.8, label="to final frame")
-b.fill_between(t.step, t.ca_rmsd_to_final_median, t.ca_rmsd_to_final_p90,
-               color=BASE_COLORS["AF3"], alpha=.2)
-b.plot(t.step, t.ca_rmsd_to_native_mean, color="#555", lw=1.4, ls="--", label="to native")
-b.set_yscale("log"); b.set_xlabel("AF3 denoising step (of 200)")
-b.set_ylabel("mean Cα RMSD (Å)")
-b.axvline(158, ls="--", lw=1.2, c="#b5545c")
-b.text(152, 400, "step 158\n(< 1 Å)", fontsize=8, color="#b5545c", ha="right")
-b.set_title(r"$\bf{B}$  AF3 convergence to final frame (n = 30)", loc="left")
-b.legend(frameon=False, loc="lower left")
+GRID = np.linspace(0, 1, 201)
+frames = {}
+for f in sorted(glob.glob(f"{BASE}/layer_probe_trajectories/outputs/*/*/*_diffusion_frames.csv")):
+    d = pd.read_csv(f)
+    if "global_dockq" not in d or d.global_dockq.isna().all():
+        continue                      # 7SG2 has no per-frame DockQ
+    frames.setdefault(d.model.iloc[0], []).append(
+        d.dropna(subset=["global_dockq"]).sort_values("normalized_progress"))
+for m, runs in frames.items():
+    curves = np.vstack([np.interp(GRID, d.normalized_progress, d.global_dockq) for d in runs])
+    for c in curves:                                   # individual complexes, as texture
+        b.plot(GRID, c, color=COL[m], lw=.8, alpha=.3, zorder=2)
+    med = np.median(curves, axis=0)
+    b.plot(GRID, med, color=COL[m], lw=2.4, zorder=4, label=f"{NAME[m]} (n = {len(runs)})")
+    fin = med[-1]
+    x = GRID[np.argmax(med >= .9 * fin)]               # median crossing of 90% of final
+    b.plot([x], [.9 * fin], "o", color=COL[m], ms=7, mec="white", mew=1.2, zorder=6)
+    b.annotate(f"{x*100:.0f}%", (x, .9 * fin), textcoords="offset points",
+               xytext=(0, 11), ha="center", fontsize=9, color=COL[m], fontweight="bold")
+b.axhline(0.49, ls="--", lw=1, c="#b5545c")
+b.text(.02, .51, "medium", fontsize=8, color="#b5545c")
+b.set_xlabel("fraction of denoising steps"); b.set_ylabel("Global DockQ")
+b.set_ylim(-0.02, 1.0); b.set_xlim(0, 1.02)
+b.set_title(r"$\bf{B}$  When the interface becomes correct", loc="left")
+b.legend(frameon=False, loc="upper left")
+b.text(.98, .03, "markers: 90% of the run's own final DockQ",
+       transform=b.transAxes, ha="right", fontsize=7.5, color="#666")
 
 # C -- time vs accuracy for the four tracks
 c = ax[2]
