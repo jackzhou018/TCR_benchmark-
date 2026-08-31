@@ -9,8 +9,14 @@ import matplotlib.colors as mcolors
 import pandas as pd
 
 MODELS = ["AF3", "Protenix", "ESMFold2"]
-BASE_COLORS = {"AF3": "#4169E1", "Protenix": "#E8871A", "ESMFold2": "#2E9B45",
-               "TCRmodel2": "#D62728"}
+# AF3 firebrick and ESMFold2 teal are fixed by the rendered structures in
+# Figure_structure_comparisons -- those are hand-made and not cheap to recolour, so the plots
+# follow them. Nothing may go back to a red or a teal.
+# Protenix is purple, not the orange it used to be: lightened orange and lightened firebrick are
+# nearly the same dot in 2A/2B, where colour is the only key. Purple/blue is the weakest pair
+# left, and it only co-occurs in 1A/1B, where the x axis names every model anyway.
+BASE_COLORS = {"AF3": "#B22222", "Protenix": "#7B3FA0", "ESMFold2": "#008080",
+               "TCRmodel2": "#4169E1"}
 # TCRmodel2 is deliberately NOT in MODELS: 1A and 1B append it themselves. Its completed
 # runnable Class I set contributes 111 of the 126 signed-off, scoreable structures
 # (9J4S has no scoreable native interface); the colour lives here so 1A shares the palette.

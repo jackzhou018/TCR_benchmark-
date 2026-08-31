@@ -24,13 +24,13 @@ a = ax[0]
 a.scatter(D.mean_rmsd, D.minq, s=26, c="#7a7a7a", alpha=.65, edgecolors="none")
 rho = stats.spearmanr(D.mean_rmsd, D.minq)
 a.set_xscale("log")
-a.axhline(0.49, ls="--", lw=1, c="#b5545c")
+a.axhline(0.49, ls="--", lw=1, c="#777777")
 a.set_xlabel("AF3 vs ESMFold2 C$\\alpha$ RMSD (\\AA)" if False else "AF3 vs ESMFold2 Cα RMSD (Å)")
 a.set_ylabel("min(AF3, ESMFold2) Global DockQ")
 a.set_title(r"$\bf{A}$  Cross-model divergence vs accuracy", loc="left")
 a.text(.04, .07, f"Spearman ρ = {rho[0]:.3f}\np = {rho[1]:.1e}", transform=a.transAxes,
        va="bottom", ha="left", fontsize=9)
-a.text(.97, .52, "medium", transform=a.transAxes, ha="right", fontsize=8, color="#b5545c")
+a.text(.97, .52, "medium", transform=a.transAxes, ha="right", fontsize=8, color="#777777")
 
 # B -- accuracy by divergence quartile
 b = ax[1]
@@ -45,7 +45,7 @@ for i, (m, col) in enumerate([("af3_dockq", BASE_COLORS["AF3"]), ("esm_dockq", B
         patch.set_facecolor(col); patch.set_alpha(.55); patch.set_edgecolor(col)
 b.set_xticks(range(4)); b.set_xticklabels(D.q.cat.categories)
 b.set_ylabel("Global DockQ"); b.set_ylim(0, 1)
-b.axhline(0.49, ls="--", lw=1, c="#b5545c")
+b.axhline(0.49, ls="--", lw=1, c="#777777")
 b.set_title(r"$\bf{B}$  Accuracy by divergence quartile", loc="left")
 b.legend(handles=[plt.Line2D([], [], color=BASE_COLORS[k], lw=6, alpha=.55, label=k)
                   for k in ("AF3", "ESMFold2")], loc="lower left", frameon=False)
@@ -56,7 +56,8 @@ ok_a, ok_e = D.af3_dockq >= .49, D.esm_dockq >= .49
 counts = [int((ok_a & ok_e).sum()), int((ok_a & ~ok_e).sum()),
           int((~ok_a & ok_e).sum()), int((~ok_a & ~ok_e).sum())]
 lab = ["both", "AF3\nonly", "ESMFold2\nonly", "neither"]
-cols = ["#5a4a9c", BASE_COLORS["AF3"], BASE_COLORS["ESMFold2"], "#b5545c"]
+# both/neither are not models: keep them neutral, or they read as Protenix and AF3
+cols = ["#3f3f3f", BASE_COLORS["AF3"], BASE_COLORS["ESMFold2"], "#b0b0b0"]
 c.bar(lab, counts, color=cols, alpha=.75)
 for i, v in enumerate(counts):
     c.text(i, v + 1.5, str(v), ha="center", fontsize=10)
