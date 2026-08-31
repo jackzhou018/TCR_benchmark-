@@ -17,7 +17,8 @@ m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
 pdb_id = sys.argv[1]
 out = f"{D}/{pdb_id}"; os.makedirs(out, exist_ok=True)
 native = gemmi.read_structure(f"{ROOT}/input_data/natives/{pdb_id}.pdb")
-native.setup_entities()
+native.setup_entities(); native.remove_alternative_conformations()   # 8RYP etc. are high enough
+                                                                     # resolution to have altlocs
 cls = "Class II" if any(ch.name == "E" for ch in native[0]) else "Class I"
 mhc = m.MHC[cls]
 
@@ -44,6 +45,7 @@ nat = cas(native)
 for tag, path in (("AF3", f"{m.AF3}/{pdb_id}/{pdb_id}_model_0.cif"),
                   ("ESMFold2", f"{m.ESM}/{pdb_id}/{pdb_id}_model_0.cif")):
     st = gemmi.read_structure(path); st.setup_entities()
+    st.remove_alternative_conformations()
     pred = cas(st)
     P, Q = [], []
     for c in mhc:

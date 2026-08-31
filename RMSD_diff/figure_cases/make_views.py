@@ -21,7 +21,8 @@ import os
 import gemmi, numpy as np
 
 D = os.path.dirname(os.path.abspath(__file__))
-CASES = ["8RYO", "9NW2", "9RU5", "9GV7"]
+CASES = ["8RYO", "9NW2", "9RU5", "9GV7",          # divergent
+         "8RYP", "43RH", "8QFY", "8WUL", "8PJG"]  # both models right
 MODELS = [("native", "gray70"), ("AF3", "firebrick"), ("ESM", "teal")]
 
 
