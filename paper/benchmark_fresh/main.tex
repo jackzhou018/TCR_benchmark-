@@ -192,26 +192,20 @@ construction}\label{benchmark-set-construction}
 
 We constructed a dataset of TCR-pMHC Class I and Class II complexes from the TCR3d database {[}12,14{]}, which
 curates all known TCR complex structures. Restricting to \ensuremath{\alpha}\ensuremath{\beta} TCR complexes
-with an initial RCSB {[}37{]} release date after 30 September 2021 gave 427 class
+with an initial RCSB {[}37{]} release date after 30 September 2021(the training cutoff date for all 4 models) gave 427 class
 I and 72 class II candidates. Of these, 136 were complete
-TCR--peptide--MHC complexes containing all of an MHC peptide-binding
-platform, a peptide, and paired TCR \ensuremath{\alpha} and \ensuremath{\beta} variable domains (114 class
-I, 22 class II); the remainder were unliganded TCRs, pMHC-only entries,
-TCR-mimic antibody complexes, or otherwise incomplete triads.
+TCR--peptide--MHC complexes containing an MHC platform, a peptide, 
+and paired TCR \ensuremath{\alpha} and \ensuremath{\beta} domains (114 class
+I, 22 class II).
 
 All 136 entries were reviewed against their deposited coordinates and
 primary publications, and ten were excluded from scoring. Five (8TRL,
 8TRQ, 8TRR, 9NIG, 9WNT) contain modified peptide residues that a
-standard FASTA sequence cannot represent, and because the modification
-is in every case part of the interaction being modelled, predicting
-these complexes from sequence alone is not well posed. Four (8VD0, 8VQ8,
+standard FASTA sequence cannot represent. Four (8VD0, 8VQ8,
 9AUD, 9C3E) are engineered constructs in which the peptide is covalently
-fused to the MHC through a linker; modelling their components as
-separate chains would alter the connectivity of the experiment. The
-last, 9J4S, has no physical TCR--pMHC interface in any author-defined
-assembly of the deposited structure and so cannot be scored at all
-(Section 2.3). This leaves 126 scoreable complexes, 111 class I and 15 class
-II.
+fused to the MHC through a linker. The
+last, 9J4S, has no physical TCR--pMHC interface meaning it cannot be scored by our standard metrics.
+(Section 2.3). This leaves 126 scoreable complexes, 111 class I and 15 class II.
 
 No redundancy filter or resolution cut was applied to the primary set.
 TCR variable-domain identity is a poor novelty axis --- germline V-gene
@@ -787,14 +781,18 @@ Equal accuracy is not the same as equal predictions. Across the 126
 complexes the median C\ensuremath{\alpha} RMSD between the AlphaFold 3 and ESMFold2
 predictions of the same FASTA is 1.35 \AA{}, but the distribution runs to
 13.9 \AA{}, and the disagreement is anatomically specific. The two models
-agree closely on everything except where the TCR sits: median peptide
+agree closely on everything except where the TCR sits (Figure 4B): median peptide
 RMSD in the MHC frame is 0.44 \AA{} and median peptide conformation RMSD is
 0.33 \AA{}, and the median internal RMSD of the TCR module itself is 0.74 \AA{}
 --- but the median MHC--TCR\ensuremath{\alpha} and MHC--TCR\ensuremath{\beta} interface RMSDs are 1.62 and
 1.63 \AA{}, and the rigid-body decomposition gives a median TCR rotation of
 11.1\ensuremath{^{\circ}} with a tail reaching 177\ensuremath{^{\circ}}. On 20 of 126 complexes the two models
 place the TCR more than 30\ensuremath{^{\circ}} apart, and on 10 of them more than 90\ensuremath{^{\circ}}
-apart, while building the same pMHC and the same TCR fold. The
+apart, while building the same pMHC and the same TCR fold. Binned, the
+contrast is stark: the two models place the peptide within 1 \AA{} on 84\%
+of complexes and build the TCR variable module to within 1 \AA{} on 75\%,
+but agree on the MHC--TCR\ensuremath{\alpha} interface to within 1 \AA{} on only 35\% and differ
+by 2 \AA{} or more on 40\% of complexes (11\% by more than 5 \AA{}). The
 disagreement is a docking disagreement, not a folding one.
 
 That disagreement is a strong, entirely reference-free predictor of
@@ -808,7 +806,7 @@ quality signal than either model's internal confidence, than pDockQ, and
 than the composite and random-forest scores of Section 3.7 --- and it
 requires no confidence head, no training, and no calibration.
 
-By divergence quartile (Figure 4B), median Global DockQ falls from 0.860
+By divergence quartile, median Global DockQ falls from 0.860
 (AlphaFold 3) and 0.862 (ESMFold2) in the most-agreeing quartile to
 0.518 and 0.564 in the most-divergent one. Notably, the two models
 mostly fail on the \emph{same} complexes: both quartile trends are
@@ -837,13 +835,16 @@ disagreement does.
 
 \begin{figure}
 \centering
-\includegraphics[width=1\linewidth,height=\textheight,keepaspectratio,alt={Structural divergence between the AlphaFold 3 and ESMFold2 predictions. (A) C\ensuremath{\alpha} RMSD between the AlphaFold 3 and ESMFold2 predictions of the same sequence against the worse of their two Global DockQ scores. (B) Global DockQ by quartile of that divergence; the two methods degrade together. (C) Complexes reaching medium-or-better accuracy: individually, jointly, and neither.}]{Figure_divergence.png}
+\includegraphics[width=1\linewidth,height=\textheight,keepaspectratio,alt={Structural divergence between the AlphaFold 3 and ESMFold2 predictions. (A) C\ensuremath{\alpha} RMSD between the AlphaFold 3 and ESMFold2 predictions of the same sequence against the worse of their two Global DockQ scores. (B) The same divergence resolved by region and binned: percentage of the 126 complexes whose AlphaFold 3 and ESMFold2 predictions agree to within 1, 1--2, 2--5 or 5 or more \AA{}, with the median beside each bar. The two models build the same peptide and the same TCR fold and disagree on where the TCR sits. (C) Complexes reaching medium-or-better accuracy: individually, jointly, and neither.}]{Figure_divergence.png}
 \caption{\textbf{Structural divergence between the AlphaFold 3 and
 ESMFold2 predictions.} (\textbf{A}) C\ensuremath{\alpha} RMSD between the AlphaFold 3 and
 ESMFold2 predictions of the same sequence against the worse of their two
-Global DockQ scores. (\textbf{B}) Global DockQ by quartile of that
-divergence; the two methods degrade together. (\textbf{C}) Complexes
-reaching medium-or-better accuracy: individually, jointly, and neither.}
+Global DockQ scores. (\textbf{B}) The same divergence resolved by region
+and binned: percentage of the 126 complexes whose two predictions agree to
+within 1, 1--2, 2--5 or 5 or more \AA{}, with the median beside each bar. The
+two models build the same peptide and the same TCR fold; they disagree on
+where the TCR sits. (\textbf{C}) Complexes reaching medium-or-better
+accuracy: individually, jointly, and neither.}
 \end{figure}
 
 \subsection{3.10 Denoising trajectories of the two

@@ -17,7 +17,7 @@ plt.rcParams.update({"font.size": 10, "axes.titlesize": 11, "axes.labelsize": 10
 
 D = pd.read_csv(f"{BASE}/RMSD_diff/divergence_with_metadata.csv")
 D["minq"] = D[["af3_dockq", "esm_dockq"]].min(axis=1)
-fig, ax = plt.subplots(1, 3, figsize=(11.5, 3.5))
+fig, ax = plt.subplots(1, 3, figsize=(12.4, 3.8))
 
 # A -- divergence vs the worse of the two predictions
 a = ax[0]
@@ -32,23 +32,39 @@ a.text(.04, .07, f"Spearman ρ = {rho[0]:.3f}\np = {rho[1]:.1e}", transform=a.tr
        va="bottom", ha="left", fontsize=9)
 a.text(.97, .52, "medium", transform=a.transAxes, ha="right", fontsize=8, color="#777777")
 
-# B -- accuracy by divergence quartile
+# B -- what the two models actually agree on, by anatomy
 b = ax[1]
-D["q"] = pd.qcut(D.mean_rmsd, 4, labels=["Q1\n(closest)", "Q2", "Q3", "Q4\n(most divergent)"])
-w = 0.34
-for i, (m, col) in enumerate([("af3_dockq", BASE_COLORS["AF3"]), ("esm_dockq", BASE_COLORS["ESMFold2"])]):
-    data = [D.loc[D.q == q, m].values for q in D.q.cat.categories]
-    pos = np.arange(4) + (i - .5) * w
-    bp = b.boxplot(data, positions=pos, widths=w * .88, patch_artist=True, showfliers=False,
-                   medianprops=dict(color="black", lw=1.2))
-    for patch in bp["boxes"]:
-        patch.set_facecolor(col); patch.set_alpha(.55); patch.set_edgecolor(col)
-b.set_xticks(range(4)); b.set_xticklabels(D.q.cat.categories)
-b.set_ylabel("Global DockQ"); b.set_ylim(0, 1)
-b.axhline(0.49, ls="--", lw=1, c="#777777")
-b.set_title(r"$\bf{B}$  Accuracy by divergence quartile", loc="left")
-b.legend(handles=[plt.Line2D([], [], color=BASE_COLORS[k], lw=6, alpha=.55, label=k)
-                  for k in ("AF3", "ESMFold2")], loc="lower left", frameon=False)
+PARTS = [("Whole complex", "mean_rmsd"),
+         ("MHC-TCRβ interface", "MHC_TCRb"),
+         ("MHC-TCRα interface", "MHC_TCRa"),
+         ("TCR fold (internal)", "tcr_internal_rmsd"),
+         ("Peptide in MHC frame", "peptide_in_MHC_frame"),
+         ("Peptide conformation", "peptide_local")]
+BINS = [0, 1, 2, 5, np.inf]
+BLAB = ["< 1 Å", "1–2 Å", "2–5 Å", "≥ 5 Å"]
+BCOL = ["#dcdcdc", "#a8b6c4", "#5f7d99", "#2f4257"]   # ordinal ramp: agree -> disagree
+for i, (name, col) in enumerate(PARTS):
+    x = D[col].dropna()
+    pct = pd.cut(x, BINS, labels=BLAB).value_counts(normalize=True).reindex(BLAB) * 100
+    left = 0.0
+    for lab, c in zip(BLAB, BCOL):
+        v = pct[lab]
+        b.barh(i, v, left=left, color=c, height=.68,
+               label=lab if i == 0 else None, edgecolor="white", lw=.8)
+        if v >= 7:
+            b.text(left + v / 2, i, f"{v:.0f}%", ha="center", va="center", fontsize=8.5,
+                   color="white" if c in BCOL[2:] else "#333333")
+        left += v
+    b.text(101, i, f"med {x.median():.2f} Å", va="center", fontsize=8, color="#555555")
+b.set_yticks(range(len(PARTS))); b.set_yticklabels([p[0] for p in PARTS])
+b.set_xlim(0, 124); b.set_xticks([0, 25, 50, 75, 100])
+b.set_xlabel("% of 126 complexes")
+b.set_title(r"$\bf{B}$  AF3 vs ESMFold2 agreement by region", loc="left")
+b.legend(frameon=False, ncol=4, loc="upper center", bbox_to_anchor=(.44, -.20),
+         handlelength=1.1, columnspacing=1.0, fontsize=8.5)
+for s in ("top", "right", "left"):
+    b.spines[s].set_visible(False)
+b.tick_params(axis="y", length=0)
 
 # C -- complementarity at the medium-quality cut
 c = ax[2]
