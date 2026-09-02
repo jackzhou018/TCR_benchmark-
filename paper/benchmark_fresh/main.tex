@@ -253,8 +253,13 @@ by ranking score was scored. The server enforces a 30 September 2021
 training cutoff.
 
 Protenix {[}38{]}, an open reproduction of the AlphaFold 3 architecture,
-was run through its public server with the same inputs, and the
-top-ranked model scored.
+was run through its public server on the same inputs, as the base default
+model \texttt{protenix\_base\_default\_v1.0.0} with both MSA and template
+features enabled; the retained server outputs carry a paired MSA, an
+unpaired MSA and an \texttt{hmmsearch} template list for every chain. This
+checkpoint is trained to the same 30 September 2021 structure cutoff as the
+AlphaFold Server. Five diffusion samples were returned per target and the
+top-ranked model was scored.
 
 ESMFold2 {[}29{]} was run through the ESM SDK
 API as model \texttt{esmfold2-fast-2026-05} with the SDK defaults of 10
